@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "973160728685",
+    "project_id": "aonescan-a1",
+    "storage_bucket": "aonescan-a1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973160728685:android:e7aca2025959bb51d81764",
+        "android_client_info": {
+          "package_name": "com.aonescan.scanner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "973160728685-e8jr69k275bovf5gbkp9dbh8t6ic6h5v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNKOgpVCidKijFdNLVqczn5gqpaqyRBi8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "973160728685-e8jr69k275bovf5gbkp9dbh8t6ic6h5v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

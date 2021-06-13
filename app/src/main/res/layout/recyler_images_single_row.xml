@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="210dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:clickable="true"
+    android:layout_centerInParent="true"
+    android:layout_marginTop="8dp"
+    android:elevation="10dp">
+
+    <LinearLayout
+        android:layout_width="170dp"
+        android:layout_height="210dp"
+        android:orientation="vertical"
+        android:layout_centerInParent="true">
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/singleImage"
+            android:layout_width="170dp"
+            android:layout_height="210dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"/>
+    </LinearLayout>
+    <FrameLayout
+        android:layout_width="170dp"
+        android:layout_height="210dp"
+        android:layout_centerInParent="true">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom">
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:text="Click On Image to Edit"
+                android:textColor="#fff"
+                android:gravity="center"
+                android:elevation="10dp"
+                android:background="#22000000"/>
+        </FrameLayout>
+<!--        <LinearLayout-->
+<!--            android:id="@+id/image_selected_layer"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:orientation="vertical"-->
+<!--            android:background="#65FFFFFF"-->
+<!--            android:elevation="10dp"-->
+<!--            android:visibility="invisible"/>-->
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:background="#65FFFFFF"-->
+<!--            android:gravity="center"-->
+<!--            android:elevation="10dp"-->
+<!--            android:padding="5dp"-->
+<!--            android:id="@+id/image_selected_layer"-->
+<!--            android:visibility="invisible"-->
+<!--            android:orientation="horizontal">-->
+
+<!--        </LinearLayout>-->
+    </FrameLayout>
+
+
+</RelativeLayout>

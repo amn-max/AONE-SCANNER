@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group
+        android:id="@+id/group1">
+        <item android:id="@+id/prev_pdf"
+            android:title="Recent PDF"
+            android:icon="@drawable/ic_pdf"/>
+    </group>
+
+    <group
+        android:id="@+id/group2">
+        <item android:id="@+id/appInfo"
+            android:title="App Info"
+            android:icon="@drawable/ic_baseline_info_24"/>
+
+        <item android:id="@+id/privacyPoli"
+            android:title="Privacy Policy"
+            android:icon="@drawable/ic_privacy_policy"/>
+
+        <item android:id="@+id/rateApp"
+            android:title="Rate This App"
+            android:icon="@drawable/ic_baseline_star_rate_24"/>
+    </group>
+
+</menu>

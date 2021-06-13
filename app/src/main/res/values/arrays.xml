@@ -1,0 +1,18 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="text_enhance_entries">
+        <item>0%(Normal)</item>
+        <item>25%</item>
+        <item>50%</item>
+        <item>75%</item>
+        <item>100%</item>
+    </string-array>
+
+    <string-array name="text_enhance_values">
+        <item>0%</item>
+        <item>25%</item>
+        <item>50%</item>
+        <item>75%</item>
+        <item>100%</item>
+    </string-array>
+</resources>

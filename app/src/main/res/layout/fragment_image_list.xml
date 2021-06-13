@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".Fragments.ImageListFragment"
+    android:background="@color/dark"
+    android:id="@+id/image_list_parent_layout">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="9"
+        android:id="@+id/editProjectTitleLayout">
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Scan Name"
+            android:id="@+id/btn_change_title_name"
+            style="?android:attr/borderlessButtonStyle"
+            app:backgroundTint="@color/dark"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:textSize="10sp"
+            app:iconSize="0dp"
+            android:layout_weight="3"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:drawableRight="@drawable/ic_edit_10"
+            android:minHeight="0dp"
+            android:minWidth="0dp" />
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RV_capturedImages"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/editProjectTitleLayout"
+        android:layoutAnimation="@anim/layout_animation"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+    <LinearLayout
+        android:id="@+id/txt_No_PDF_CREATED"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="30dp"
+        android:layout_above="@id/btn_start_scan">
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ADD IMAGES"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:textColor="@color/white"/>
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="To Add Images, Click On Expand below"
+            android:textAlignment="center"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:textColor="@color/white"/>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btn_start_scan"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/ic_baseline_picture_as_pdf_24"
+        android:tooltipText="Convert To PDF"
+        android:contentDescription="Convert To PDF"
+        android:layout_above="@id/btn_openGallery"
+        android:elevation="2dp"
+        app:borderWidth="0dp"
+        android:backgroundTint="@color/light_orange"
+        android:visibility="invisible"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btn_openGallery"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/ic_baseline_add_to_photos_24"
+        android:contentDescription="Open Gallery"
+        android:tooltipText="Open Gallery"
+        android:layout_above="@id/btn_openCamera"
+        android:backgroundTint="@color/light_orange"
+        android:elevation="2dp"
+        app:borderWidth="0dp"
+        android:visibility="invisible"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btn_openCamera"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_above="@id/expandMoreButtons"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="20dp"
+        android:src="@drawable/ic_baseline_camera_alt_24"
+        android:contentDescription="Open Camera"
+        android:elevation="2dp"
+        android:tooltipText="Open Camera"
+        android:backgroundTint="@color/light_orange"
+        app:borderWidth="0dp"
+        android:visibility="invisible"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/expandMoreButtons"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_baseline_expand_less_24"
+        android:elevation="2dp"
+        app:borderWidth="0dp"
+        android:tooltipText="Show More"
+        android:backgroundTint="@color/light_orange"
+        android:contentDescription="Show More"/>
+
+</RelativeLayout>

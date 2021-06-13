@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:id="@+id/cardViewPdf"
+    android:layout_height="120dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_marginRight="12dp"
+    android:layout_marginLeft="12dp"
+    android:layout_marginBottom="5dp"
+    app:cardCornerRadius="10dp"
+    android:elevation="10dp"
+    android:background="@color/light_dark_100"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:orientation="horizontal"
+        android:weightSum="10"
+        android:background="@color/light_dark_100">
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/pdf_Image"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:background="@drawable/pdf_image"/>
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="7"
+            android:layout_margin="5dp"
+            android:background="@color/light_dark_100">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/txt_pdfTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PDF TITLE"
+                android:textColor="@color/white"
+                android:layout_toLeftOf="@id/morePdf"
+                android:textSize="16sp"
+                android:paddingBottom="20dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="5dp"/>
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_above="@id/txt_data_modified"
+                android:layout_marginLeft="5dp"
+                android:textColor="@color/white"
+                android:text="Date Modified: "/>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/txt_data_modified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="5dp"
+                android:text="18/12/2020"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/txt_pdf_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="8.5MB"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="5dp"
+                android:layout_marginRight="5dp"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/morePdf"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/ic_baseline_more_vert_24"
+                app:backgroundTint="@color/white"/>
+        </RelativeLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="temp_dark">#18191A</color>
+    <color name="dark">#0E0E0E</color>
+    <color name="shimmer_gray">#B3B3B3</color>
+    <color name="colorPrimary">#03DAC6</color>
+    <color name="colorPrimaryDark">#02988a</color>
+    <color name="colorAccent">#4F4D4D</color>
+    <color name="darkGray">#4F4D4D</color>
+    <color name="holo_blue_dark">#33b5e5</color>
+    <color name="white">#E4E6EB</color>
+    <color name="light_white">#B0B3B8</color>
+    <color name="black">#121212</color>
+    <color name="slightWhite">#3D5AFE</color>
+    <color name="editorWorkSpace">#DDD3D3</color>
+    <color name="btnSelectedColor">#EFE7E7</color>
+    <color name="btnDisabled">#E0E0E0</color>
+    <color name="btnTextDisabled">#A9A9A9</color>
+
+    <color name="blue">#D6D7D7</color>
+    <color name="orange">#ffff900d</color>
+    <color name="bottom_background_color">#ffc4c2bc</color>
+
+    <!--Button Styles-->
+    <color name="gradient_start_color">#2f6df4</color>
+    <color name="blue_d">#006CD4</color>
+    <color name="gradient_end_color">#18a3fe</color>
+
+    <!--tab and screen text Styles-->
+    <color name="tab_indicator_gray">#c0c0c0</color>
+    <color name="intro_title_color">#000000</color>
+    <color name="intro_description_color">#656565</color>
+
+    <!--polygon Styles-->
+    <color name="polygonViewCircleStrokeColor">#FEFEFE</color>
+    <color name="polygonViewCircleBackground">#E3E9EC</color>
+
+    <color name="light_orange">#FFAF5F</color>
+    <color name="light_sky">#4ACFAC</color>
+    <color name="light_purple">#7E8CE0</color>
+    <color name="pink_red">#FFA48E</color>
+    <color name="light_dark_100">#282A36</color>
+    <color name="light_dark_400">#121212</color>
+    <color name="transparent">#80000000</color>
+    <color name="transparent_400">#B2000000</color>
+    <color name="text_disabled">#dddddd</color>
+    <color name="DarkBackground">#121212</color>
+    <color name="TextBackground">#404040</color>
+    <color name="Pallet">#282828</color>
+    <color name="TextGrey">#b3b3b3</color>
+    <color name="HintColor"> #FFFFFFFF</color>
+    <color name="Red"> #d32f2f</color>
+</resources>

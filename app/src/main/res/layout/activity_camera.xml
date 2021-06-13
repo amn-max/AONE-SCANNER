@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CameraActivity"
+    android:orientation="vertical"
+    android:weightSum="8"
+    android:background="@color/dark"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/dark"
+        android:orientation="vertical"
+        android:layout_weight="0.5">
+        <View
+            android:id="@+id/camera_flash"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_flash_off"
+            android:elevation="2dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="10dp"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5.4"
+        android:orientation="vertical"
+        android:background="@color/dark">
+
+        <LinearLayout
+            android:id="@+id/leftShutterAnim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            android:elevation="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/viewFinder1"
+            app:layout_constraintTop_toTopOf="parent"
+            android:orientation="vertical" />
+
+        <LinearLayout
+            android:id="@+id/rightShutterAnim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/white"
+            android:elevation="2dp"
+            app:layout_constraintBottom_toBottomOf="@+id/viewFinder1"
+            app:layout_constraintEnd_toEndOf="@+id/viewFinder1"
+            app:layout_constraintStart_toStartOf="@+id/leftShutterAnim"
+            app:layout_constraintTop_toTopOf="@+id/viewFinder1"
+            android:orientation="vertical" />
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/viewFinder1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </androidx.camera.view.PreviewView>
+
+        <View
+            android:id="@+id/focus"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/ic_focus"
+            app:layout_constraintBottom_toTopOf="@+id/zoomBar"
+            app:layout_constraintEnd_toEndOf="@+id/viewFinder1"
+            app:layout_constraintStart_toStartOf="@+id/viewFinder1"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="invisible" />
+
+        <SeekBar
+            android:id="@+id/zoomBar"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:max="100"
+            android:padding="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/viewFinder1"
+            android:elevation="2dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2.1"
+        android:background="@color/dark">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/camera_capture_button"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:drawableTop="@drawable/ic_shutter"
+            android:text="Capture"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textColor="@color/black"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/camera_flip"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:drawableTop="@drawable/ic_camera_flip"
+            android:text="Switch"
+            android:textColor="@color/white"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_marginLeft="20dp" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="20dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgViewStamp"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:padding="3dp"
+                app:shapeAppearanceOverlay="@style/circleImageView"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_submit_photos"
+                app:layout_constraintEnd_toEndOf="@+id/btn_submit_photos"
+                app:layout_constraintStart_toStartOf="@+id/btn_submit_photos"
+                app:layout_constraintTop_toTopOf="@+id/btn_submit_photos" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_submit_photos"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:drawableTop="@drawable/ic_baseline_done_50"
+                android:text="ADD"
+                android:scaleType="centerCrop"
+                android:textColor="@color/black"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/txt_numberOfImages"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/rounded_textview"
+                android:elevation="2dp"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#fff"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:visibility="invisible"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fitsSystemWindows="true"
+    android:background="@drawable/rounded_corner_white">
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp">
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/txt_enter_file_name"
+            android:text="ENTER PDF NAME"
+            app:fontFamily="@font/titillium_web_semibold"
+            android:textColor="@color/dark"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/et_filename_pdf"
+            android:background="@drawable/rounder_corner_textview"
+            android:hint="Filename"
+            android:padding="10dp"
+            android:layout_below="@id/txt_enter_file_name"
+            android:textColor="@color/white"
+            android:textColorHint="@color/light_white" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:layout_below="@id/et_filename_pdf">
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save"
+                android:layout_alignParentRight="true"
+                android:backgroundTint="@color/dark"
+                android:id="@+id/btn_save"
+                app:cornerRadius="10dp"/>
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:id="@+id/btn_cancel"
+                android:backgroundTint="@color/light_white"
+                android:textColor="@color/dark"
+                android:layout_marginRight="6dp"
+                app:cornerRadius="10dp"
+                android:layout_toLeftOf="@id/btn_save" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

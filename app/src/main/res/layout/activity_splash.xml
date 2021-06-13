@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Splash"
+    android:background="@color/dark"
+    android:fitsSystemWindows="true"
+    android:id="@+id/anim_appear">
+   <RelativeLayout
+       android:layout_width="match_parent"
+       android:layout_height="match_parent">
+       <com.google.android.material.textview.MaterialTextView
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="@string/app_name"
+           android:layout_centerHorizontal="true"
+           android:layout_above="@id/splashLogo"
+           android:textColor="@color/white"
+           android:textSize="18sp"
+           android:fontFamily="@font/titillium_web_semibold"/>
+
+       <com.google.android.material.imageview.ShapeableImageView
+           android:id="@+id/splashLogo"
+           android:layout_centerInParent="true"
+           android:layout_width="100dp"
+           android:layout_height="100dp"
+           android:src="@drawable/ic_aonescanner_playstore"
+           android:layout_margin="20dp"/>
+
+   </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory>
+        <SwitchPreferenceCompat
+            android:key="pref_auto"
+            android:title="@string/auto_crop_enhance"
+            android:summary="@string/auto_crop_enhance_summary"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory>
+        <ListPreference
+            android:defaultValue="1"
+            android:key="enhance_value"
+            android:title="Enhance Values"
+            android:summary="Set default enhance value for for all the images."
+            android:entryValues="@array/text_enhance_values"
+            android:entries="@array/text_enhance_entries"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory>
+        <Preference android:title="Privacy Policy">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://aonescanner.netlify.app"/>
+        </Preference>
+        <Preference android:title="Terms &amp; conditions">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://aonescanner.netlify.app"/>
+        </Preference>
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

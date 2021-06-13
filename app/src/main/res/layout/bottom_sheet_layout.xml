@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+    <View
+        android:layout_width="32dp"
+        android:layout_height="9dp"
+        android:background="@drawable/rounded_corner"
+        android:id="@+id/slide_view"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:padding="10dp"
+        android:layout_below="@id/slide_view">
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/bottom_sheet_select_item_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Item"
+            android:textColor="@color/black"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_below="@id/bottom_sheet_select_item_txt"
+            android:layout_marginTop="12dp">
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_openGallery"
+                android:drawableLeft="@drawable/ic_baseline_add_to_photos_24"
+                android:text="OPEN GALLERY"
+                android:textColor="@color/white"
+                android:textAlignment="textEnd"
+                android:backgroundTint="@color/dark"
+                app:cornerRadius="30dp"
+                android:padding="10dp"/>
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_openCamera"
+                android:drawableLeft="@drawable/ic_baseline_camera_alt_24"
+                android:text="OPEN CAMERA"
+                android:textColor="@color/white"
+                android:textAlignment="textEnd"
+                android:backgroundTint="@color/dark"
+                app:cornerRadius="30dp"
+                android:padding="10dp"/>
+<!--            <com.google.android.material.button.MaterialButton-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:drawableLeft="@drawable/ic_pdf_to_image"-->
+<!--                android:text="CONVERT PDF TO JPEG"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textAlignment="textEnd"-->
+<!--                android:id="@+id/btn_convert_to_png"-->
+<!--                android:backgroundTint="@color/dark"-->
+<!--                app:cornerRadius="30dp"-->
+<!--                android:padding="10dp"/>-->
+        </LinearLayout>
+    </RelativeLayout>
+
+
+</RelativeLayout>
