@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -90,7 +92,6 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     private FloatingActionButton startScanButton;
     private FloatingActionButton expandMoreButtons;
     private Project currProject;
-    private Snackbar snackbar;
     private Spinner enhanceSpinner;
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable runAnimation;
@@ -217,17 +218,7 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
 //                    }
 //                }
 //        );
-        arguments = getArguments();
-        String historyId = arguments.getString("historyId", "");
 
-        if (!historyId.isEmpty()) {
-            FetchProjectById fetchProjectById = new FetchProjectById();
-            fetchProjectById.setId(Integer.valueOf(historyId));
-            fetchProjectById.executeOnExecutor(executor);
-        } else {
-            FetchPhotosFromDb fetchPhotosFromDb = new FetchPhotosFromDb();
-            fetchPhotosFromDb.executeOnExecutor(executor);
-        }
         getActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -382,10 +373,10 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     }
 
     void changeTitle(String fileName) {
-        class ChangeTitle extends AsyncTask<Void, Void, Project> {
+        class ChangeTitle extends AsyncTask<Void, Void, Void> {
 
             @Override
-            protected Project doInBackground(Void... voids) {
+            protected Void doInBackground(Void... voids) {
                 String historyName = arguments.getString("historyTitle");
                 String historyId = arguments.getString("historyId", "");
 
@@ -394,17 +385,23 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                         .projectDao()
                         .updateProjectName(fileName, currProject.getId());
 
-                Project title = ProjectDBClient.getInstance(getActivity().getApplicationContext())
-                        .getProjectDB()
-                        .projectDao()
-                        .getProjectById(currProject.getId());
-                return title;
+
+                return null;
             }
 
             @Override
-            protected void onPostExecute(Project project) {
-                super.onPostExecute(project);
-                viewModel.updateActionBarTitle(project.getProjectName());
+            protected void onPostExecute(Void unused) {
+                super.onPostExecute(unused);
+                ProjectDBClient.getInstance(getActivity().getApplicationContext())
+                        .getProjectDB()
+                        .projectDao()
+                        .getProjectById(currProject.getId())
+                        .observe(getViewLifecycleOwner(), new Observer<Project>() {
+                            @Override
+                            public void onChanged(Project project) {
+                                viewModel.updateActionBarTitle(project.getProjectName());
+                            }
+                        });
             }
         }
         ChangeTitle changeTitle = new ChangeTitle();
@@ -466,6 +463,18 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                 expandMoreButtons.startAnimation(arrowShake);
             }
         }, 500);
+
+        arguments = getArguments();
+        String historyId = arguments.getString("historyId", "");
+
+        if (!historyId.isEmpty()) {
+            FetchProjectById fetchProjectById = new FetchProjectById();
+            fetchProjectById.setId(Integer.valueOf(historyId));
+            fetchProjectById.executeOnExecutor(executor);
+        } else {
+            FetchPhotosFromDb fetchPhotosFromDb = new FetchPhotosFromDb();
+            fetchPhotosFromDb.executeOnExecutor(executor);
+        }
 
         recyclerView = view.findViewById(R.id.RV_capturedImages);
         recyclerView.setHasFixedSize(true);
@@ -639,12 +648,16 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     public void createPDF(String fileName) {
         if (getActivity() != null) {
             File file = new File(outputDirectory, fileName);
-            final LoadingDialog dialog = new LoadingDialog(getActivity());
-            dialog.startLoadingDialog();
-            dialog.setLoadingText("Loading...");
+            Snackbar bar = Snackbar.make(image_list_parent_layout, "Please wait! Do not close window while processing images",Snackbar.LENGTH_INDEFINITE)
+                    .setActionTextColor(getContext().getResources().getColor(R.color.light_orange));
+            ViewGroup contentLay = (ViewGroup) bar.getView()
+                    .findViewById(com.google.android.material.R.id.snackbar_text).getParent();
+            ProgressBar item = new ProgressBar(getContext());
+            item.getIndeterminateDrawable().setColorFilter(getContext().getResources().getColor(R.color.orange), PorterDuff.Mode.MULTIPLY);
+            contentLay.addView(item);
+            bar.show();
             PDDocument document = new PDDocument();
             class SavePdf extends AsyncTask<Void, Void, Void> {
-
                 @Override
                 protected Void doInBackground(Void... voids) {
                     for (Images image : imagesObject) {
@@ -653,9 +666,9 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                                 @Override
                                 public void run() {
                                     if ((imagesObject.indexOf(image) + 1) < imagesObject.size()) {
-                                        dialog.setLoadingText("Converting To PDF " + (imagesObject.indexOf(image) + 1) + "/" + imagesObject.size());
+                                        bar.setText("Converting To PDF " + (imagesObject.indexOf(image) + 1) + "/" + imagesObject.size());
                                     } else {
-                                        dialog.setLoadingText("Saving PDF " + (imagesObject.indexOf(image) + 1) + "/" + imagesObject.size());
+                                        bar.setText("Saving PDF " + (imagesObject.indexOf(image) + 1) + "/" + imagesObject.size());
                                     }
                                 }
                             });
@@ -675,15 +688,12 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    dialog.dismissDialog();
+                                    bar.dismiss();
                                     Toast.makeText(getContext(), "Pdf creation error - code 24", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
-
-
                     }
-
                     return null;
                 }
 
@@ -697,12 +707,15 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                         e.printStackTrace();
                     }
 
-                    getActivity().runOnUiThread(new Runnable() {
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            dialog.dismissDialog();
+                            bar.dismiss();
+                            Snackbar bar1 = Snackbar.make(image_list_parent_layout, "Pdf generated! You can check on recent pdf in menu down below 😊",Snackbar.LENGTH_SHORT)
+                                    .setActionTextColor(getContext().getResources().getColor(R.color.light_orange));
+                            bar1.show();
                         }
-                    });
+                    },10);
                 }
             }
             SavePdf savePdf = new SavePdf();
@@ -757,33 +770,38 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
 
     class FetchProjectById extends AsyncTask<Void, Void, Project> {
         private int id;
-
+        private Project list;
         public void setId(int id) {
             this.id = id;
         }
 
         @Override
         protected Project doInBackground(Void... voids) {
-            Project list = ProjectDBClient.getInstance(getActivity().getApplicationContext())
-                    .getProjectDB()
-                    .projectDao()
-                    .getProjectById(id);
-            return list;
+            return null;
         }
 
         @Override
-        protected void onPostExecute(Project project) {
-            super.onPostExecute(project);
-            currProject = project;
-            ArrayList<String> imagePathsDb = project.getImagePaths();
-            imagesObject.clear();
-            for (String path : imagePathsDb) {
-                Images image = new Images(path);
-                imagesObject.add(image);
-            }
-            madapter.notifyDataSetChanged();
-            noImagesLayoutText.setVisibility(View.GONE);
-            viewModel.updateActionBarTitle(project.getProjectName());
+        protected void onPreExecute() {
+            super.onPreExecute();
+            ProjectDBClient.getInstance(getActivity().getApplicationContext())
+                    .getProjectDB()
+                    .projectDao()
+                    .getProjectById(id)
+                    .observe(getViewLifecycleOwner(), new Observer<Project>() {
+                        @Override
+                        public void onChanged(Project project) {
+                            currProject = project;
+                            ArrayList<String> imagePathsDb = project.getImagePaths();
+                            imagesObject.clear();
+                            for (String path : imagePathsDb) {
+                                Images image = new Images(path);
+                                imagesObject.add(image);
+                            }
+                            madapter.notifyDataSetChanged();
+                            noImagesLayoutText.setVisibility(View.GONE);
+                            viewModel.updateActionBarTitle(project.getProjectName());
+                        }
+                    });
         }
     }
 

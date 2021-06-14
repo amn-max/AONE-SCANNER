@@ -3,6 +3,8 @@ package com.aonescan.scanner.Adapter;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -311,13 +313,18 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
         }
 
         private void selectItem(LinearLayout selection_background, Project curr) {
-            if (selectedItems.contains(curr)) {
-                selectedItems.remove(curr);
-                selection_background.setVisibility(View.INVISIBLE);
-            } else {
-                selectedItems.add(curr);
-                selection_background.setVisibility(View.VISIBLE);
-            }
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    if (selectedItems.contains(curr)) {
+                        selectedItems.remove(curr);
+                        selection_background.setVisibility(View.INVISIBLE);
+                    } else {
+                        selectedItems.add(curr);
+                        selection_background.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
         }
 
 

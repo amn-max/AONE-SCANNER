@@ -96,6 +96,9 @@ public class PolygonView extends FrameLayout {
         paint.setStrokeWidth(2);
         paint.setAntiAlias(true);
     }
+    public void resetPaintColor(){
+        paint.setColor(getResources().getColor(R.color.orange));
+    }
 
     public Map<Integer, PointF> getPoints() {
 

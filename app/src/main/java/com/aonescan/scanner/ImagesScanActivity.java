@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -138,7 +139,12 @@ public class ImagesScanActivity extends AppCompatActivity {
         final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
         dialog.startLoadingDialog();
         changeCount++;
-        selectedImageBitmap = getCroppedImage();
+        if(polygonView.isValidShape(polygonView.getPoints())){
+            selectedImageBitmap = getCroppedImage();
+        }else{
+            Toast.makeText(getApplicationContext(),"Oops! cant crop this.",Toast.LENGTH_SHORT).show();
+            polygonView.resetPaintColor();
+        }
         addToUndoList();
         Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
         imageView.setImageBitmap(scaledBitmap);

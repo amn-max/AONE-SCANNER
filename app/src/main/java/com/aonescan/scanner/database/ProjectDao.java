@@ -25,7 +25,7 @@ public interface ProjectDao {
     Project getLatestProjectStatic();
 
     @Query("SELECT * FROM project WHERE id = :historyId ORDER BY createdOn DESC")
-    Project getProjectById(int historyId);
+    LiveData<Project> getProjectById(int historyId);
 
     @Query("UPDATE project set projectName = :projectName WHERE id = :historyId")
     void updateProjectName(String projectName, int historyId);

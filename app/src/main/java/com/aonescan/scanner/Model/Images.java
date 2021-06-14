@@ -7,6 +7,7 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.aonescan.scanner.database.Project;
+import com.skydoves.balloon.Balloon;
 
 import java.security.PublicKey;
 
@@ -19,7 +20,7 @@ public class Images {
     private String image;
     private Boolean isSelected = false;
     private Boolean isEnhanced = false;
-
+    private boolean isEnhancing = false;
     public Images(){
 
     }
@@ -28,6 +29,13 @@ public class Images {
         this.image = s;
     }
 
+    public void setEnhancing(Boolean isEnhancing){
+        this.isEnhancing = isEnhancing;
+    }
+
+    public Boolean getIsEnhancing(){
+        return isEnhancing;
+    }
     public void setNumberId(int numberId){
         this.numberId = numberId;
     }

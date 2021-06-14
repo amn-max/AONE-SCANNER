@@ -5,7 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -54,7 +58,8 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
     private RelativeLayout image_list_parent_layout;
     private int projectId;
     private Executor executor;
-
+    private Handler handler1 = new Handler(Looper.getMainLooper());
+    private Handler handler2 = new Handler(Looper.getMainLooper());
     public CapturedImagesAdapter(Context c, ArrayList<Images> absList,
                                  ImagesListener imagesListener,
                                  AppCompatActivity activity,
@@ -230,10 +235,29 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
         @Override
         protected Void doInBackground(Void... voids) {
             File outputDirectory = new OutputDirectory(context, ".images").getFileDir();
+            Snackbar snackbar = Snackbar.make(context,image_list_parent_layout,"Please wait! Do not close window while processing images",Snackbar.LENGTH_INDEFINITE)
+                    .setActionTextColor(context.getResources().getColor(R.color.light_orange));
+            ViewGroup contentLay = (ViewGroup) snackbar.getView()
+                    .findViewById(com.google.android.material.R.id.snackbar_text).getParent();
+            ProgressBar item = new ProgressBar(context);
+            item.getIndeterminateDrawable().setColorFilter(context.getResources().getColor(R.color.orange), PorterDuff.Mode.MULTIPLY);
+            contentLay.addView(item);
+            snackbar.show();
 
             for (int i = 0; i < selectedItems.size(); i++) {
                 try {
                     int index = absList.indexOf(selectedItems.get(i));
+
+                    handler1.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            int processingImageIndex = index + 1;
+                            int size = selectedItems.size() - 1;
+                            snackbar.setText("Processing images " + processingImageIndex + "/" + size);
+                            absList.get(index).setEnhancing(true);
+                            notifyItemChanged(index);
+                        }
+                    });
                     if(!absList.get(index).getIsEnhanced()){
                         File EditedFile = new File(outputDirectory, "b_Image_" + System.currentTimeMillis() + ".jpg");
                         Bitmap bitmap = BitmapFactory.decodeFile(absList.get(index).getImage());
@@ -245,7 +269,13 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                         enhancedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream);
                         fileOutputStream.flush();
                         fileOutputStream.close();
-                        notifyItemChanged(index);
+                        handler2.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                absList.get(index).setEnhancing(false);
+                                notifyItemChanged(index);
+                            }
+                        },200);
                         Thread.sleep(5);
                     }
                 } catch (FileNotFoundException e) {
@@ -256,6 +286,9 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                     e.printStackTrace();
                 }
             }
+            multiSelect = false;
+            selectedItems.clear();
+            snackbar.dismiss();
             return null;
         }
 
@@ -271,11 +304,13 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView singleView;
+        ProgressBar progressBar;
 //        LinearLayout image_selected_layer;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             singleView = (ImageView) itemView.findViewById(R.id.singleImage);
+            progressBar = itemView.findViewById(R.id.singleImageLoading);
 //            image_selected_layer = itemView.findViewById(R.id.image_selected_layer);
         }
 
@@ -301,6 +336,12 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                 singleView.setAlpha(0.3f);
             } else {
                 singleView.setAlpha(1.0f);
+            }
+
+            if(image.getIsEnhancing()){
+                progressBar.setVisibility(View.VISIBLE);
+            }else{
+                progressBar.setVisibility(View.INVISIBLE);
             }
 
             singleView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -403,13 +444,18 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
         }
 
         private void selectItem(Images image, ImageView image_selected_layer) {
-            if (selectedItems.contains(image)) {
-                selectedItems.remove(image);
-                singleView.setAlpha(1.0f);
-            } else {
-                selectedItems.add(image);
-                singleView.setAlpha(0.3f);
-            }
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    if (selectedItems.contains(image)) {
+                        selectedItems.remove(image);
+                        singleView.setAlpha(1.0f);
+                    } else {
+                        selectedItems.add(image);
+                        singleView.setAlpha(0.3f);
+                    }
+                }
+            });
         }
     }
 
