@@ -38,7 +38,6 @@ import com.aonescan.scanner.Adapter.CapturedImagesAdapter;
 import com.aonescan.scanner.CameraActivity;
 import com.aonescan.scanner.CostumClass.FileNameDialog;
 import com.aonescan.scanner.CostumClass.FileUtils;
-import com.aonescan.scanner.CostumClass.LoadingDialog;
 import com.aonescan.scanner.CostumClass.OutputDirectory;
 import com.aonescan.scanner.CostumClass.ScanNameDialog;
 import com.aonescan.scanner.MainActivity;
@@ -61,12 +60,8 @@ import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -79,8 +74,8 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     private static int CAMERA_REQUEST_CODE = 122;
     private static int GALLERY_REQUEST_CODE = 124;
     private static int CROP_INTENT_CODE = 1021;
-    private Executor executor = new ThreadPoolExecutor(5,128,1,
-            TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+    private Executor executor = new ThreadPoolExecutor(5, 128, 1,
+            TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     private RecyclerView recyclerView;
     private CapturedImagesAdapter madapter;
     private RecyclerView.LayoutManager layoutManager;
@@ -334,7 +329,7 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                for (int i =0;i<paths.size();i++){
+                for (int i = 0; i < paths.size(); i++) {
                     image.setId(currProject.getId());
                     image.setImage(paths.get(i));
                     image.setIsEnhanced(false);
@@ -648,7 +643,7 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     public void createPDF(String fileName) {
         if (getActivity() != null) {
             File file = new File(outputDirectory, fileName);
-            Snackbar bar = Snackbar.make(image_list_parent_layout, "Please wait! Do not close window while processing images",Snackbar.LENGTH_INDEFINITE)
+            Snackbar bar = Snackbar.make(image_list_parent_layout, "Please wait! Do not close window while processing images", Snackbar.LENGTH_INDEFINITE)
                     .setActionTextColor(getContext().getResources().getColor(R.color.light_orange));
             ViewGroup contentLay = (ViewGroup) bar.getView()
                     .findViewById(com.google.android.material.R.id.snackbar_text).getParent();
@@ -711,11 +706,11 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                         @Override
                         public void run() {
                             bar.dismiss();
-                            Snackbar bar1 = Snackbar.make(image_list_parent_layout, "Pdf generated! You can check on recent pdf in menu down below 😊",Snackbar.LENGTH_SHORT)
+                            Snackbar bar1 = Snackbar.make(image_list_parent_layout, "Pdf generated! You can check on recent pdf in menu down below 😊", Snackbar.LENGTH_SHORT)
                                     .setActionTextColor(getContext().getResources().getColor(R.color.light_orange));
                             bar1.show();
                         }
-                    },10);
+                    }, 10);
                 }
             }
             SavePdf savePdf = new SavePdf();
@@ -771,6 +766,7 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     class FetchProjectById extends AsyncTask<Void, Void, Project> {
         private int id;
         private Project list;
+
         public void setId(int id) {
             this.id = id;
         }
@@ -797,8 +793,11 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                                 Images image = new Images(path);
                                 imagesObject.add(image);
                             }
-                            madapter.notifyDataSetChanged();
-                            noImagesLayoutText.setVisibility(View.GONE);
+                            if (project.getImagePaths().size() > 0) {
+                                noImagesLayoutText.setVisibility(View.GONE);
+                            } else {
+                                noImagesLayoutText.setVisibility(View.VISIBLE);
+                            }
                             viewModel.updateActionBarTitle(project.getProjectName());
                         }
                     });

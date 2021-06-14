@@ -3,15 +3,11 @@ package com.aonescan.scanner.Model;
 
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
-import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.aonescan.scanner.database.Project;
-import com.skydoves.balloon.Balloon;
 
-import java.security.PublicKey;
-
-@Entity(foreignKeys = {@ForeignKey(entity = Project.class,parentColumns = "id",childColumns = "id",onDelete = ForeignKey.CASCADE)})
+@Entity(foreignKeys = {@ForeignKey(entity = Project.class, parentColumns = "id", childColumns = "id", onDelete = ForeignKey.CASCADE)})
 public class Images {
 
     @PrimaryKey(autoGenerate = true)
@@ -21,7 +17,8 @@ public class Images {
     private Boolean isSelected = false;
     private Boolean isEnhanced = false;
     private boolean isEnhancing = false;
-    public Images(){
+
+    public Images() {
 
     }
 
@@ -29,21 +26,23 @@ public class Images {
         this.image = s;
     }
 
-    public void setEnhancing(Boolean isEnhancing){
+    public void setEnhancing(Boolean isEnhancing) {
         this.isEnhancing = isEnhancing;
     }
 
-    public Boolean getIsEnhancing(){
+    public Boolean getIsEnhancing() {
         return isEnhancing;
     }
-    public void setNumberId(int numberId){
-        this.numberId = numberId;
-    }
-    public int getNumberId(){
+
+    public int getNumberId() {
         return numberId;
     }
 
-    public int getId(){
+    public void setNumberId(int numberId) {
+        this.numberId = numberId;
+    }
+
+    public int getId() {
         return id;
     }
 
@@ -67,11 +66,11 @@ public class Images {
         this.image = image;
     }
 
-    public void setIsEnhanced(boolean isEnhanced){
-        this.isEnhanced = isEnhanced;
+    public boolean getIsEnhanced() {
+        return isEnhanced;
     }
 
-    public boolean getIsEnhanced(){
-        return isEnhanced;
+    public void setIsEnhanced(boolean isEnhanced) {
+        this.isEnhanced = isEnhanced;
     }
 }

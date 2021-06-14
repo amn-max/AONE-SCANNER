@@ -90,7 +90,7 @@ public class CameraActivity extends AppCompatActivity {
     private Preview preview;
     private View cameraFlash;
     private Button camera_Capture_Button;
-    private Handler handler = new Handler();
+    private Handler handler = new Handler(Looper.getMainLooper());
     private ArrayList<String> ListImagesAbsPath = new ArrayList<String>();
     private TextView noOfImages;
     private Button sumbitPhotos;
@@ -158,7 +158,12 @@ public class CameraActivity extends AppCompatActivity {
 
         soundShutter = soundPool.load(this, R.raw.camerashutter, 1);
         camera_Capture_Button.setOnClickListener(v -> {
-            camera_Capture_Button.setEnabled(false);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    camera_Capture_Button.setEnabled(false);
+                }
+            });
             playShutter();
             takePhotos();
             leftShutterAnim.animate().setDuration(200).alpha(0.4f).translationX(leftShutterAnim.getWidth()).setListener(new Animator.AnimatorListener() {
@@ -542,7 +547,12 @@ public class CameraActivity extends AppCompatActivity {
 
                 ListImagesAbsPath.add(absPath);
                 noOfImages.setVisibility(View.VISIBLE);
-                camera_Capture_Button.setEnabled(true);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        camera_Capture_Button.setEnabled(true);
+                    }
+                });
 
 
             }

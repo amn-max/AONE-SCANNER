@@ -183,7 +183,7 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
                                 .getProjectDB()
                                 .projectDao()
                                 .delete(item);
-                    }catch (Exception e){
+                    } catch (Exception e) {
 
                     }
                 }

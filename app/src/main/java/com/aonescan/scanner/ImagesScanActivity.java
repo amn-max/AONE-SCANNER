@@ -20,10 +20,8 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.aonescan.scanner.CostumClass.CustomDialog;
 import com.aonescan.scanner.CostumClass.LoadingDialogTransparent;
@@ -35,11 +33,6 @@ import com.aonescan.scanner.Model.Action;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.skydoves.balloon.ArrowOrientation;
-import com.skydoves.balloon.ArrowPositionRules;
-import com.skydoves.balloon.Balloon;
-import com.skydoves.balloon.BalloonAnimation;
-import com.skydoves.balloon.BalloonSizeSpec;
 import com.xw.repo.BubbleSeekBar;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -139,10 +132,10 @@ public class ImagesScanActivity extends AppCompatActivity {
         final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
         dialog.startLoadingDialog();
         changeCount++;
-        if(polygonView.isValidShape(polygonView.getPoints())){
+        if (polygonView.isValidShape(polygonView.getPoints())) {
             selectedImageBitmap = getCroppedImage();
-        }else{
-            Toast.makeText(getApplicationContext(),"Oops! cant crop this.",Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getApplicationContext(), "Oops! cant crop this.", Toast.LENGTH_SHORT).show();
             polygonView.resetPaintColor();
         }
         addToUndoList();
@@ -186,7 +179,7 @@ public class ImagesScanActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         singleImagePos = getIntent().getIntExtra("singleImagePosition", 0);
-        isEnhanced = getIntent().getBooleanExtra("isEnhanced",false);
+        isEnhanced = getIntent().getBooleanExtra("isEnhanced", false);
 
         holderImageCrop = findViewById(R.id.holderImageCrop);
         initializeElement();
@@ -350,7 +343,7 @@ public class ImagesScanActivity extends AppCompatActivity {
                 executor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        if(!isEnhanced){
+                        if (!isEnhanced) {
                             selectedImageBitmap = nativeClass.getMagicColoredBitmap(ImageUtils.bitmapToMat(singleImage), 1);
                             Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
                             handlerExe.post(new Runnable() {
@@ -365,7 +358,7 @@ public class ImagesScanActivity extends AppCompatActivity {
                                     });
                                 }
                             });
-                        }else{
+                        } else {
                             handlerExe.post(new Runnable() {
                                 @Override
                                 public void run() {

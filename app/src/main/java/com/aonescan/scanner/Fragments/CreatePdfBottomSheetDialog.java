@@ -280,7 +280,7 @@ public class CreatePdfBottomSheetDialog extends BottomSheetDialogFragment {
                     .insert(project);
             Log.d("ProjectId", String.valueOf(s));
             Images image = new Images();
-            for (int i=0;i<imagesObject.size();i++){
+            for (int i = 0; i < imagesObject.size(); i++) {
                 image.setImage(imagesObject.get(i).getImage());
                 image.setIsEnhanced(false);
                 image.setId((int) s);

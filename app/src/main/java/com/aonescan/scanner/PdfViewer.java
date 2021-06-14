@@ -20,7 +20,6 @@ public class PdfViewer extends AppCompatActivity {
         String absPath = getIntent().getStringExtra("selectedAbsPath");
 
         pdfView = findViewById(R.id.pdf_viewer);
-
         pdfView.useBestQuality(true);
 
         pdfView.fromFile(new File(absPath))
@@ -36,8 +35,6 @@ public class PdfViewer extends AppCompatActivity {
                     }
                 })
                 .load();
-
-
     }
 
     @Override

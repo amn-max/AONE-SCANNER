@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.aonescan.scanner.CostumClass.OutputDirectory;
@@ -60,6 +61,7 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
     private Executor executor;
     private Handler handler1 = new Handler(Looper.getMainLooper());
     private Handler handler2 = new Handler(Looper.getMainLooper());
+
     public CapturedImagesAdapter(Context c, ArrayList<Images> absList,
                                  ImagesListener imagesListener,
                                  AppCompatActivity activity,
@@ -154,8 +156,9 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
             }).show();
             mode.finish();
         } else if (item.getItemId() == R.id.action_enhance_selected) {
-            BulkEnhance bulkEnhance = new BulkEnhance();
-            bulkEnhance.execute();
+            BulkEnhance bulkEnhance = new BulkEnhance(mode);
+            bulkEnhance.executeOnExecutor(executor);
+
         } else if (item.getItemId() == R.id.action_check_all) {
             setAllChecked();
         }
@@ -231,11 +234,23 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
 
     class BulkEnhance extends AsyncTask<Void, Void, Void> {
         ArrayList<String> paths = new ArrayList<>();
+        private ActionMode mode;
+
+        public BulkEnhance(ActionMode mode) {
+            this.mode = mode;
+        }
 
         @Override
         protected Void doInBackground(Void... voids) {
+            ArrayList<Images> tempSelectedImages = new ArrayList<>(selectedItems);
+            handler1.post(new Runnable() {
+                @Override
+                public void run() {
+                    mode.finish();
+                }
+            });
             File outputDirectory = new OutputDirectory(context, ".images").getFileDir();
-            Snackbar snackbar = Snackbar.make(context,image_list_parent_layout,"Please wait! Do not close window while processing images",Snackbar.LENGTH_INDEFINITE)
+            Snackbar snackbar = Snackbar.make(context, image_list_parent_layout, "Please wait! Do not close window while processing images", Snackbar.LENGTH_INDEFINITE)
                     .setActionTextColor(context.getResources().getColor(R.color.light_orange));
             ViewGroup contentLay = (ViewGroup) snackbar.getView()
                     .findViewById(com.google.android.material.R.id.snackbar_text).getParent();
@@ -243,53 +258,81 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
             item.getIndeterminateDrawable().setColorFilter(context.getResources().getColor(R.color.orange), PorterDuff.Mode.MULTIPLY);
             contentLay.addView(item);
             snackbar.show();
-
-            for (int i = 0; i < selectedItems.size(); i++) {
+            for (int i = 0; i < tempSelectedImages.size(); i++) {
                 try {
-                    int index = absList.indexOf(selectedItems.get(i));
+                    int index = absList.indexOf(tempSelectedImages.get(i));
 
                     handler1.post(new Runnable() {
                         @Override
                         public void run() {
-                            int processingImageIndex = index + 1;
-                            int size = selectedItems.size() - 1;
-                            snackbar.setText("Processing images " + processingImageIndex + "/" + size);
-                            absList.get(index).setEnhancing(true);
-                            notifyItemChanged(index);
+                            try {
+                                int processingImageIndex = index + 1;
+                                int size = tempSelectedImages.size();
+                                int percent = (processingImageIndex * 100) / size;
+                                snackbar.setText("Processing selected images " + percent + " %");
+                                absList.get(index).setEnhancing(true);
+                                notifyItemChanged(index);
+                            } catch (ArrayIndexOutOfBoundsException e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
-                    if(!absList.get(index).getIsEnhanced()){
-                        File EditedFile = new File(outputDirectory, "b_Image_" + System.currentTimeMillis() + ".jpg");
-                        Bitmap bitmap = BitmapFactory.decodeFile(absList.get(index).getImage());
-                        Bitmap enhancedBitmap = new NativeClass().getMagicColoredBitmap(ImageUtils.bitmapToMat(bitmap), 1);
-                        bitmap.recycle();
-                        absList.get(index).setIsEnhanced(true);
-                        absList.get(index).setImage(EditedFile.getAbsolutePath());
-                        FileOutputStream fileOutputStream = new FileOutputStream(absList.get(index).getImage(), false);
-                        enhancedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream);
-                        fileOutputStream.flush();
-                        fileOutputStream.close();
-                        handler2.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
+                    File EditedFile = new File(outputDirectory, "b_Image_" + System.currentTimeMillis() + ".jpg");
+                    Bitmap bitmap = BitmapFactory.decodeFile(absList.get(index).getImage());
+                    Bitmap enhancedBitmap = new NativeClass().getMagicColoredBitmap(ImageUtils.bitmapToMat(bitmap), 1);
+                    bitmap.recycle();
+                    absList.get(index).setIsEnhanced(true);
+                    absList.get(index).setImage(EditedFile.getAbsolutePath());
+                    FileOutputStream fileOutputStream = new FileOutputStream(absList.get(index).getImage(), false);
+                    enhancedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fileOutputStream);
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                    handler2.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                absList.get(index).setEnhancing(false);
+                                notifyItemChanged(index);
+                            } catch (ArrayIndexOutOfBoundsException e) {
                                 absList.get(index).setEnhancing(false);
                                 notifyItemChanged(index);
                             }
-                        },200);
-                        Thread.sleep(5);
+                        }
+                    }, 200);
+                    if (isCancelled()) {
+                        break;
                     }
+                    Thread.sleep(5);
+
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    e.printStackTrace();
                 }
             }
             multiSelect = false;
             selectedItems.clear();
+            tempSelectedImages.clear();
+            handler2.post(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                }
+            });
             snackbar.dismiss();
             return null;
+        }
+
+        @Override
+        protected void onCancelled(Void unused) {
+            super.onCancelled(unused);
+            Snackbar snackbar = Snackbar.make(context, image_list_parent_layout, "Canceled enhancing!", Snackbar.LENGTH_INDEFINITE)
+                    .setActionTextColor(context.getResources().getColor(R.color.light_orange));
+            snackbar.show();
         }
 
         @Override
@@ -338,9 +381,9 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                 singleView.setAlpha(1.0f);
             }
 
-            if(image.getIsEnhancing()){
+            if (image.getIsEnhancing()) {
                 progressBar.setVisibility(View.VISIBLE);
-            }else{
+            } else {
                 progressBar.setVisibility(View.INVISIBLE);
             }
 
@@ -368,7 +411,7 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                         Activity origin = (Activity) context;
                         cropImageIntent.putExtra("singleImage", image.getImage());
                         cropImageIntent.putExtra("singleImagePosition", pos);
-                        cropImageIntent.putExtra("isEnhanced",image.getIsEnhanced());
+                        cropImageIntent.putExtra("isEnhanced", image.getIsEnhanced());
                         origin.startActivityForResult(cropImageIntent, CROP_INTENT_CODE);
                     }
                 }

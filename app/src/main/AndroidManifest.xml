@@ -21,9 +21,9 @@
         android:allowBackup="true"
         android:debuggable="false"
         android:largeHeap="true">
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-7148598053427607~9167586347"/>
+<!--        <meta-data-->
+<!--            android:name="com.google.android.gms.ads.APPLICATION_ID"-->
+<!--            android:value="ca-app-pub-7148598053427607~9167586347"/>-->
         <activity android:name=".PdfViewer"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"/>
         <activity android:name=".TocActivity"

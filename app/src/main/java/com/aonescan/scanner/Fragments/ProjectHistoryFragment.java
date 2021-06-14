@@ -9,6 +9,7 @@ import android.widget.RelativeLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -23,6 +24,11 @@ import com.aonescan.scanner.R;
 import com.aonescan.scanner.database.Project;
 import com.aonescan.scanner.database.ProjectDBClient;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.skydoves.balloon.ArrowOrientation;
+import com.skydoves.balloon.ArrowPositionRules;
+import com.skydoves.balloon.Balloon;
+import com.skydoves.balloon.BalloonAnimation;
+import com.skydoves.balloon.BalloonSizeSpec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +47,7 @@ public class ProjectHistoryFragment extends Fragment implements ProjectHistoryLi
     private CreatePdfBottomSheetDialog bottomSheetDialog;
     private MainViewModel viewModel;
     private RelativeLayout fragment_project_history_parent;
+    private Balloon balloon;
 
     public ProjectHistoryFragment() {
         // Required empty public constructor
@@ -93,6 +100,24 @@ public class ProjectHistoryFragment extends Fragment implements ProjectHistoryLi
         fabCreateNewProject = view.findViewById(R.id.fab_create_new_project);
         fragment_project_history_parent = view.findViewById(R.id.fragment_project_history_parent);
         recyclerViewProjectHistory.setLayoutManager(new LinearLayoutManager(getContext()));
+        balloon = new Balloon.Builder(getContext())
+                .setArrowSize(10)
+                .setArrowOrientation(ArrowOrientation.TOP)
+                .setArrowPositionRules(ArrowPositionRules.ALIGN_BALLOON)
+                .setArrowPosition(0.5f)
+                .setWidth(BalloonSizeSpec.WRAP)
+                .setHeight(65)
+                .setTextSize(15f)
+                .setPadding(5)
+                .setCornerRadius(4f)
+                .setAlpha(0.9f)
+                .setText("Create your first scan")
+                .setTextColor(ContextCompat.getColor(getContext(), R.color.white))
+                .setBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorPrimary))
+                .setBalloonAnimation(BalloonAnimation.FADE)
+                .setAutoDismissDuration(4000L)
+                .build();
+
         fabCreateNewProject.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,6 +144,9 @@ public class ProjectHistoryFragment extends Fragment implements ProjectHistoryLi
     void runAdapter(List<Project> projects) {
         projectList.clear();
         projectList.addAll(projects);
+        if (projectList.size() == 0) {
+            balloon.showAlignTop(fabCreateNewProject, 0, -10);
+        }
         projectHistoryAdapter = new ProjectHistoryAdapter(getContext(), projectList, this, (MainActivity) getActivity(), fragment_project_history_parent);
         recyclerViewProjectHistory.setAdapter(projectHistoryAdapter);
     }

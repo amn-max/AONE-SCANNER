@@ -7,6 +7,22 @@
     tools:context=".PdfViewer"
     android:background="@color/dark"
     android:fitsSystemWindows="true">
+<!--    <RelativeLayout-->
+<!--        android:id="@+id/openInOtherPdfRL"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="?attr/actionBarSize"-->
+<!--        android:background="@color/dark">-->
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnOpenInOtherPdf"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_centerVertical="true"-->
+<!--            android:layout_alignParentRight="true"-->
+<!--            android:text="Open in other pdf viewer"-->
+<!--            android:drawableLeft="@drawable/ic_pdf"-->
+<!--            android:backgroundTint="@color/light_purple"-->
+<!--            android:layout_marginRight="8dp"/>-->
+<!--    </RelativeLayout>-->
     <com.github.barteksc.pdfviewer.PDFView
         android:id="@+id/pdf_viewer"
         android:background="@color/dark"

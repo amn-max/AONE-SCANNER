@@ -6,8 +6,6 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
-import com.aonescan.scanner.Model.Images;
-
 import java.util.ArrayList;
 import java.util.List;
 

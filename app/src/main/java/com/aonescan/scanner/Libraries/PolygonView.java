@@ -96,7 +96,8 @@ public class PolygonView extends FrameLayout {
         paint.setStrokeWidth(2);
         paint.setAntiAlias(true);
     }
-    public void resetPaintColor(){
+
+    public void resetPaintColor() {
         paint.setColor(getResources().getColor(R.color.orange));
     }
 
