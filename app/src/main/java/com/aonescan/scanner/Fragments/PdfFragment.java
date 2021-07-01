@@ -1,7 +1,6 @@
 package com.aonescan.scanner.Fragments;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,48 +8,43 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.aonescan.scanner.Adapter.PDFAdapter;
 import com.aonescan.scanner.CostumClass.OutputDirectory;
 import com.aonescan.scanner.MainViewModel;
 import com.aonescan.scanner.Model.Pdf;
 import com.aonescan.scanner.R;
-import com.google.android.play.core.review.ReviewInfo;
-import com.google.android.play.core.review.ReviewManager;
-import com.google.android.play.core.review.ReviewManagerFactory;
-import com.google.android.play.core.tasks.Task;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link PdfFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class PdfFragment extends Fragment {
+public class PdfFragment extends Fragment implements LifecycleObserver {
 
+    private final ArrayList<Pdf> pdfFiles = new ArrayList<>();
     String pdfPattern = ".pdf";
     private PDFAdapter pdfAdapter;
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private File outputDirectory;
-    private ArrayList<Pdf> pdfFiles = new ArrayList<>();
-    private ViewPager2 mainViewPager;
     private LinearLayout displayNoPdfCreated;
-    private ReviewInfo reviewInfo;
-    private ReviewManager manager;
-    private int appCount = 0;
-    private int intialCount = 0;
     private MainViewModel viewModel;
 
     public PdfFragment() {
@@ -64,15 +58,23 @@ public class PdfFragment extends Fragment {
         return fragment;
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+    public void onCreated(){
+        requireActivity().getLifecycle().removeObserver(this);
+    }
+
     @Override
-    public void onActivityCreated(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                viewModel = new ViewModelProvider(getActivity()).get(MainViewModel.class);
-                viewModel.updateActionBarTitle("Created PDF's");
-            }
+    public void onAttach(@NonNull @NotNull Context context) {
+        super.onAttach(context);
+        requireActivity().getLifecycle().addObserver(this);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull @NotNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        requireActivity().runOnUiThread(() -> {
+            viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+            viewModel.updateActionBarTitle("Created PDF's");
         });
     }
 
@@ -80,39 +82,6 @@ public class PdfFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         outputDirectory = new OutputDirectory(getContext(), "PDF").getFileDir();
-
-        initReviews();
-        SharedPreferences pref = getActivity().getApplicationContext().getSharedPreferences(getResources().getString(R.string.app_name), Context.MODE_PRIVATE);
-        appCount = pref.getInt("timesOpened", 1);
-        intialCount = pref.getInt("initialCount", 1);
-
-    }
-
-    private void initReviews() {
-        manager = ReviewManagerFactory.create(getActivity());
-        Task<ReviewInfo> request = manager.requestReviewFlow();
-        request.addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                reviewInfo = task.getResult();
-            } else {
-
-            }
-        });
-    }
-
-    private void askForReview() {
-        if (reviewInfo != null) {
-            Task<Void> flow = manager.launchReviewFlow(getActivity(), reviewInfo);
-            flow.addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    SharedPreferences pref = getActivity().getApplicationContext().getSharedPreferences(getResources().getString(R.string.app_name), Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = pref.edit();
-                    editor.putInt("timesOpened", 1);
-                } else {
-
-                }
-            });
-        }
     }
 
     @Override
@@ -137,43 +106,41 @@ public class PdfFragment extends Fragment {
 
     private void searchDir() {
 
-        File FileList[] = outputDirectory.listFiles();
-        Arrays.sort(FileList, new Comparator<File>() {
-            @Override
-            public int compare(File o1, File o2) {
-                return Long.valueOf(o2.lastModified()).compareTo(o1.lastModified());
-            }
-        });
+        File[] FileList = outputDirectory.listFiles();
+        if(FileList!=null){
+            Arrays.sort(FileList,
+                    (o1, o2) -> Long.compare(o2.lastModified(), o1.lastModified()));
+        }
 
 
+        pdfFiles.clear();
         if (FileList != null) {
-            pdfFiles.clear();
-            for (int i = 0; i < FileList.length; i++) {
-                if (FileList[i].isDirectory()) {
+            for (File file : FileList) {
+                if (file.isDirectory()) {
 
                 } else {
-                    if (FileList[i].getName().endsWith(pdfPattern)) {
-//                        pdfFileName.add(FileList[i].getAbsolutePath());
-//                        Log.e("PDFADAPTER"," "+pdfFileName);
-                        String name = FileList[i].getName();
-                        String absPath = FileList[i].getAbsolutePath();
-                        long dateModified = FileList[i].lastModified();
-                        String size = getFileSize(FileList[i].length());
+                    if (file.getName().endsWith(pdfPattern)) {
+    //                        pdfFileName.add(FileList[i].getAbsolutePath());
+    //                        Log.e("PDFADAPTER"," "+pdfFileName);
+                        String name = file.getName();
+                        String absPath = file.getAbsolutePath();
+                        long dateModified = file.lastModified();
+                        String size = getFileSize(file.length());
                         pdfFiles.add(new Pdf(name, absPath, dateModified, size));
                     }
                 }
             }
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        pdfAdapter.notifyDataSetChanged();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
         }
+        requireActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    pdfAdapter.notifyDataSetChanged();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private String getFileSize(long length) {

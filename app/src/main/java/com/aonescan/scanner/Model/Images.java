@@ -14,8 +14,8 @@ public class Images {
     private int numberId;
     private int id;
     private String image;
-    private Boolean isSelected = false;
-    private Boolean isEnhanced = false;
+    private boolean isSelected = false;
+    private boolean isEnhanced = false;
     private boolean isEnhancing = false;
 
     public Images() {

@@ -1,8 +1,8 @@
 package com.aonescan.scanner;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -18,30 +18,24 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
 import com.aonescan.scanner.CostumClass.CustomDialog;
 import com.aonescan.scanner.Fragments.PdfFragment;
 import com.aonescan.scanner.Fragments.ProjectHistoryFragment;
+import com.aonescan.scanner.update.Constants;
+import com.aonescan.scanner.update.InAppUpdateManager;
+import com.aonescan.scanner.update.InAppUpdateStatus;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.play.core.appupdate.AppUpdateInfo;
-import com.google.android.play.core.appupdate.AppUpdateManager;
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
-import com.google.android.play.core.install.model.AppUpdateType;
-import com.google.android.play.core.install.model.UpdateAvailability;
-import com.google.android.play.core.tasks.Task;
 
 import org.jetbrains.annotations.NotNull;
 import org.opencv.android.BaseLoaderCallback;
@@ -53,43 +47,35 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import dev.shreyaspatil.MaterialDialog.AbstractDialog;
+import dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements InAppUpdateManager.InAppUpdateHandler {
 
     private static final int PERMISSION_REQUEST_CODE = 1240;
     private static final int UPDATE_REQUEST_CODE = 1001;
     private static final String BACK_STACK_ROOT_TAG = "root_fragment";
-    private static final int CROP_INTENT_CODE = 1021;
-    private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
-    private ActionBarDrawerToggle mToggle;
-    private MaterialToolbar toolbar;
-    private NavigationView navigationView;
-    private SharedPreferences pref;
-    private FrameLayout mainFrameLayout;
-    private ArrayList mainFeaturesTitleList = new ArrayList();
-    private BottomAppBar bottomAppBar;
-    private BottomSheetBehavior<NavigationView> bottomSheetBehavior;
-    private FrameLayout background_transparent_frame;
-    private CustomDialog customDialog;
-    private CoordinatorLayout mDrawerLayout;
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+    Manifest.permission.INTERNET,
+    Manifest.permission.ACCESS_NETWORK_STATE};
+    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                    Log.i("MainActivity", "loaded successfully");
-                    break;
-                default:
-                    super.onManagerConnected(status);
-                    CustomDialog customDialog = new CustomDialog(MainActivity.this);
-                    customDialog.showMyDialog("Oops!, this is awkward", "You Device is Not Supported", false, "Ok", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
-                        @Override
-                        public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
-                            dialogInterface.dismiss();
-                        }
-                    }, null, 0, null);
+            if (status == LoaderCallbackInterface.SUCCESS) {
+                Log.i("MainActivity", "loaded successfully");
+            } else {
+                super.onManagerConnected(status);
+                CustomDialog customDialog = new CustomDialog(MainActivity.this);
+                customDialog.showMyDialog("Oops!, this is awkward", "You Device is Not Supported", false, "Ok", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int which) {
+                        dialogInterface.dismiss();
+                    }
+                }, null, 0, null);
             }
         }
 
@@ -98,6 +84,13 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
+    private MaterialToolbar toolbar;
+    private NavigationView navigationView;
+    private SharedPreferences pref;
+    private BottomAppBar bottomAppBar;
+    private BottomSheetBehavior<NavigationView> bottomSheetBehavior;
+    private FrameLayout background_transparent_frame;
+    private CustomDialog customDialog;
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
@@ -105,35 +98,35 @@ public class MainActivity extends AppCompatActivity {
         try {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            hideSystemUI();
-        }
-    }
-
-    private void hideSystemUI() {
-        // Enables regular immersive mode.
-        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
-        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-    }
-
-    private void showSystemUI() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-    }
+//    @Override
+//    public void onWindowFocusChanged(boolean hasFocus) {
+//        super.onWindowFocusChanged(hasFocus);
+//        if (hasFocus) {
+//            hideSystemUI();
+//        }
+//    }
+//
+//    private void hideSystemUI() {
+//        // Enables regular immersive mode.
+//        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+//        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//        View decorView = getWindow().getDecorView();
+//        decorView.setSystemUiVisibility(
+//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+//    }
+//
+//    private void showSystemUI() {
+//        View decorView = getWindow().getDecorView();
+//        decorView.setSystemUiVisibility(
+//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+//    }
 
     @Override
     protected void onResume() {
@@ -178,44 +171,35 @@ public class MainActivity extends AppCompatActivity {
         }
         toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-        mDrawerLayout = findViewById(R.id.drawerLayout);
-//        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
-//        mDrawerLayout.addDrawerListener(mToggle);
-//        mToggle.syncState();
-
         try {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(false);
             getSupportActionBar().setTitle(getString(R.string.app_name));
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
-//        tabLayout = findViewById(R.id.mainTabLayout);
-//        viewPager2 = findViewById(R.id.mainViewPager);
-        mainFrameLayout = findViewById(R.id.main_frame_layout);
         navigationView = findViewById(R.id.navigation_view);
         bottomAppBar = findViewById(R.id.bottomAppBar);
         background_transparent_frame = findViewById(R.id.background_transparent_frame);
         bottomSheetBehavior = BottomSheetBehavior.from(navigationView);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-//        navigationView.setNavigationItemSelectedListener(this);
+        InAppUpdateManager inAppUpdateManager = InAppUpdateManager.Builder(this,UPDATE_REQUEST_CODE)
+                .resumeUpdates(true)
+                .mode(Constants.UpdateMode.FLEXIBLE)
+                .useCustomNotification(false)
+                .snackBarMessage("An update has just been downloaded.")
+                .snackBarAction("RESTART")
+                .handler(this);
 
-        bottomAppBar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                } else {
-                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                }
-            }
-        });
-
-        background_transparent_frame.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        inAppUpdateManager.checkForAppUpdate();
+        bottomAppBar.setNavigationOnClickListener(v -> {
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            } else {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             }
         });
+
+        background_transparent_frame.setOnClickListener(v -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN));
 
         bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
@@ -236,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onNavigationItemSelected(@NonNull @NotNull MenuItem item) {
                 switch (item.getItemId()) {
@@ -280,15 +265,7 @@ public class MainActivity extends AppCompatActivity {
         appCount++;
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt("timesOpened", appCount);
-        editor.commit();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (mToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        editor.apply();
     }
 
     private void askForReview() {
@@ -377,7 +354,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void initApp() {
         getAppCountAndIncrement();
-        checkUpdate();
 //        toc = findViewById(R.id.txt_Toc);
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.slide_in,
@@ -389,12 +365,7 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         MainViewModel viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-        viewModel._title.observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                getSupportActionBar().setTitle(s);
-            }
-        });
+        viewModel._title.observe(this, s -> Objects.requireNonNull(getSupportActionBar()).setTitle(s));
 
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -403,33 +374,13 @@ public class MainActivity extends AppCompatActivity {
 //        Toast.makeText(this,switchPref.toString(),Toast.LENGTH_SHORT).show();
     }
 
-    private void checkUpdate() {
-        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(MainActivity.this);
-
-        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
-
-        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
-                Log.d("Main", "Update available");
-                try {
-                    appUpdateManager.startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE, this, UPDATE_REQUEST_CODE);
-                } catch (IntentSender.SendIntentException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                Log.d("Main", "No Update available");
-            }
-        });
-    }
-
 
     public void replaceFragment(Fragment fragment, String tag) {
         //Get current fragment placed in container
         Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main_frame_layout);
 
         //Prevent adding same fragment on top
-        if (currentFragment.getClass() == fragment.getClass()) {
+        if (Objects.requireNonNull(currentFragment).getClass() == fragment.getClass()) {
             return;
         }
 
@@ -452,15 +403,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void showDialog(String title, String msg, String positiveLabel, AbstractDialog.OnClickListener positiveOnClick, String negativeLabel, AbstractDialog.OnClickListener negativeOnClick, boolean isCancelLabel) {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle(title);
-//        builder.setCancelable(isCancelLabel);
-//        builder.setMessage(msg);
-//        builder.setPositiveButton(positiveLabel, positiveOnClick);
-//        builder.setNegativeButton(negativeLabel, negativeOnClick);
-//
-//        AlertDialog alert = builder.create();
-//        alert.show();
         customDialog = new CustomDialog(this);
         customDialog.showMyDialog(title, msg, isCancelLabel, positiveLabel, R.drawable.ic_done, positiveOnClick, negativeLabel, R.drawable.ic_close, negativeOnClick);
 
@@ -469,30 +411,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        if(requestCode==CROP_INTENT_CODE){
-//            if(resultCode==RESULT_OK){
-//                String editedPhoto = data.getStringExtra("EditedResult");
-//                Log.e("1021REQUEST",""+editedPhoto);
-//            }
-//        }
-        if (requestCode == UPDATE_REQUEST_CODE) {
-            if (resultCode != RESULT_OK) {
-                Log.d("Main", "Update flow failed!");
-                showDialog("New version available", "Please, update app to new version.", "UPDATE", new AbstractDialog.OnClickListener() {
-                    @Override
-                    public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
-                        checkUpdate();
-                    }
-                }, "NO, THANKS", new AbstractDialog.OnClickListener() {
-                    @Override
-                    public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
-                        dialogInterface.dismiss();
-                    }
-                }, true);
+        if(requestCode == UPDATE_REQUEST_CODE){
+            if(resultCode != RESULT_OK){
+                Log.d("MainActivity", "Update flow failed! Result code: " + resultCode);
             }
-        }
-        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
-            fragment.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -514,4 +436,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onInAppUpdateError(int code, Throwable error) {
+        Log.d("MainActivity", "code: " + code, error);
+    }
+
+    @Override
+    public void onInAppUpdateStatus(InAppUpdateStatus status) {
+
+    }
 }

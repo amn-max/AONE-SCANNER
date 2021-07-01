@@ -11,10 +11,10 @@ import java.util.ArrayList;
 @Entity
 public class Project implements Serializable {
 
+    private final ArrayList<String> imagePaths = new ArrayList<>();
     @PrimaryKey(autoGenerate = true)
     private int id;
     private String createdOn;
-    private ArrayList<String> imagePaths = new ArrayList<>();
     private boolean isChecked;
     private String projectName;
 

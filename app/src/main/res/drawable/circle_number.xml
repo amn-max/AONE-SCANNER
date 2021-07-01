@@ -7,4 +7,8 @@
         android:height="40dp"
         android:width="40dp" />
 
+    <stroke
+        android:color="@color/white"
+        android:width="2dp"/>
+
 </shape>

@@ -87,9 +87,9 @@ public class ImageScaleView extends ShapeableImageView {
         TOP_CENTER(0),
         BOTTOM_CENTER(1);
 
-        private int mValue;
+        private final int mValue;
 
-        private MatrixCropType(int value) {
+        MatrixCropType(int value) {
             mValue = value;
         }
 

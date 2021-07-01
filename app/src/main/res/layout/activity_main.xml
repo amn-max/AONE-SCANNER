@@ -6,7 +6,6 @@
     android:id="@+id/drawerLayout"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:fitsSystemWindows="true"
     android:background="@color/dark">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -22,8 +21,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:title="@string/app_name"
-                style="@style/Widget.MaterialComponents.Toolbar.Primary"
-                />
+                style="@style/Widget.MaterialComponents.Toolbar.Primary" />
 
         </com.google.android.material.appbar.AppBarLayout>
         <FrameLayout
@@ -37,8 +35,8 @@
             android:translationZ="-10dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/background_transparent_frame"
-            android:orientation="horizontal">
+            android:layout_marginTop="?attr/actionBarSize"
+            android:id="@+id/background_transparent_frame">
 
         </FrameLayout>
         <com.google.android.material.navigation.NavigationView

@@ -11,7 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.aonescan.scanner.R;
 
 public class LoadingDialogTransparent {
-    private Activity activity;
+    private final Activity activity;
     private AlertDialog dialog;
 
     public LoadingDialogTransparent(Activity mActivity) {

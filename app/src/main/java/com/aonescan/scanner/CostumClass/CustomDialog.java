@@ -6,7 +6,7 @@ import dev.shreyaspatil.MaterialDialog.AbstractDialog;
 import dev.shreyaspatil.MaterialDialog.BottomSheetMaterialDialog;
 
 public class CustomDialog {
-    private Activity mActivity;
+    private final Activity mActivity;
 
     public CustomDialog(Activity activity) {
         this.mActivity = activity;

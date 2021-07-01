@@ -10,7 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.aonescan.scanner.R;
 
 public class LoadingDialog {
-    private Activity activity;
+    private final Activity activity;
     private AlertDialog dialog;
     private TextView txt_Loading;
 

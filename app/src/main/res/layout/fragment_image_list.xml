@@ -7,35 +7,12 @@
     tools:context=".Fragments.ImageListFragment"
     android:background="@color/dark"
     android:id="@+id/image_list_parent_layout">
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:weightSum="9"
-        android:id="@+id/editProjectTitleLayout">
-        <com.google.android.material.button.MaterialButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Edit Scan Name"
-            android:id="@+id/btn_change_title_name"
-            style="?android:attr/borderlessButtonStyle"
-            app:backgroundTint="@color/dark"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:textSize="10sp"
-            app:iconSize="0dp"
-            android:layout_weight="3"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:drawableRight="@drawable/ic_edit_10"
-            android:minHeight="0dp"
-            android:minWidth="0dp" />
-    </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/RV_capturedImages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/editProjectTitleLayout"
+        android:layout_centerInParent="true"
         android:layoutAnimation="@anim/layout_animation"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 

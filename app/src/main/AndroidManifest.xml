@@ -4,7 +4,7 @@
     package="com.aonescan.scanner">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -18,7 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppTheme"
         tools:ignore="HardcodedDebugMode,LockedOrientationActivity"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:debuggable="false"
         android:largeHeap="true">
 <!--        <meta-data-->
@@ -43,7 +44,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="com.aonescan.scanner.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -59,14 +60,6 @@
             android:name=".AppInfoActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".SettingsActivity"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-            android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.aonescan.scanner.MainActivity" />
-        </activity>
         <activity
             android:name=".ImagesScanActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

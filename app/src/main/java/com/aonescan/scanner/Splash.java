@@ -7,20 +7,17 @@ import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
-import com.google.android.material.imageview.ShapeableImageView;
 
 public class Splash extends AppCompatActivity {
-    private static final int SPLASH_DELAY = 3000;
+    private static final int SPLASH_DELAY = 2000;
     private final Handler mHandler = new Handler();
     private final Launcher mLauncher = new Launcher();
-    private ShapeableImageView imageViewLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        imageViewLogo = findViewById(R.id.splashLogo);
     }
 
     @Override

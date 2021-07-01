@@ -1,7 +1,6 @@
 package com.aonescan.scanner.Adapter;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -30,6 +29,7 @@ import com.aonescan.scanner.database.Project;
 import com.aonescan.scanner.database.ProjectDBClient;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textview.MaterialTextView;
@@ -38,29 +38,40 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.Executor;
 
 public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAdapter.ProjectHistoryViewHolder> implements androidx.appcompat.view.ActionMode.Callback {
+    private final List<Project> selectedItems = new ArrayList<>();
     private Context mCtx;
     private List<Project> projectList;
     private ProjectHistoryListener listener;
     private boolean isOnLongPress = false;
     private boolean multiSelect = false;
-    private List<Project> selectedItems = new ArrayList<>();
     private AppCompatActivity appCompatActivity;
     private RelativeLayout fragment_project_history_parent;
-
+    private Executor executor;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private ProjectHistoryAdapter.OnItemClickListener itemClickListener;
     public ProjectHistoryAdapter(Context mCtx,
                                  List<Project> projectList,
                                  ProjectHistoryListener listener,
                                  AppCompatActivity activity,
-                                 RelativeLayout fragment_project_history_parent) {
+                                 RelativeLayout fragment_project_history_parent,
+                                 Executor executor,
+                                 ProjectHistoryAdapter.OnItemClickListener itemClickListener) {
         this.mCtx = mCtx;
         this.projectList = projectList;
         this.listener = listener;
         this.appCompatActivity = activity;
         this.fragment_project_history_parent = fragment_project_history_parent;
+        this.executor = executor;
+        this.itemClickListener = itemClickListener;
     }
 
     public ProjectHistoryAdapter() {
@@ -80,6 +91,9 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
         holder.bindProject(position);
     }
 
+    public interface OnItemClickListener {
+        void onItemClicked(View v,String historyName,int historyId,int position);
+    }
 
     @Override
     public int getItemCount() {
@@ -93,11 +107,15 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
 
     //get selected when btn clicked
     public List<Project> getSelected() {
-        return selectedItems;
+        synchronized (selectedItems){
+            return selectedItems;
+        }
     }
 
     public void unSelectAll() {
-        selectedItems.clear();
+        synchronized (selectedItems){
+            selectedItems.clear();
+        }
     }
 
     public void setLongPressAndActionListener(boolean isOnLongPress, boolean isSelected) {
@@ -125,18 +143,20 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
             try {
                 for (int i = 0; i < projectList.size(); i++) {
                     tempProjectObject.get(i).setChecked(false);
-                    for (int j = 0; j < selectedItems.size(); j++) {
+                    synchronized (selectedItems){
+                        for (int j = 0; j < selectedItems.size(); j++) {
                         if (projectList.get(i).getId() == selectedItems.get(j).getId()) {
                             selectedItems.get(j).setChecked(false);
                             projectList.get(i).setChecked(false);
                             projectList.remove(selectedItems.get(j));
                         }
                     }
+                    }
                 }
             } catch (IndexOutOfBoundsException e) {
-
+                e.printStackTrace();
             }
-            deleteFromDb(selectedItems);
+            deleteFromDb();
             Snackbar.make(mCtx, fragment_project_history_parent, "Undo Deletion of Scans", Snackbar.LENGTH_LONG).setActionTextColor(mCtx.getResources().getColor(R.color.light_orange)).setAction("UNDO", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -154,67 +174,61 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
     }
 
     void restoreInDb(ArrayList<Project> items) {
-        class RestoreFromDb extends AsyncTask<Void, Void, Void> {
-
-            @Override
-            protected Void doInBackground(Void... voids) {
-                for (Project item : items) {
-                    ProjectDBClient.getInstance(mCtx.getApplicationContext())
-                            .getProjectDB()
-                            .projectDao()
-                            .insert(item);
-                }
-                return null;
+        executor.execute(() -> {
+            for (Project item : items) {
+                ProjectDBClient.getInstance(mCtx.getApplicationContext())
+                        .getProjectDB()
+                        .projectDao()
+                        .insert(item);
             }
-        }
-        RestoreFromDb restoreFromDb = new RestoreFromDb();
-        restoreFromDb.execute();
+        });
     }
 
-    void deleteFromDb(List<Project> items) {
-        class DeleteFromDb extends AsyncTask<Void, Void, Void> {
-
-            @Override
-            protected Void doInBackground(Void... voids) {
-                for (Project item : items) {
+    void deleteFromDb() {
+        executor.execute(() -> {
+            synchronized (selectedItems){
+                for (Iterator<Project> iterator = selectedItems.iterator(); iterator.hasNext();){
                     try {
-                        item.setChecked(false);
+                        Project project = iterator.next();
+                        project.setChecked(false);
                         ProjectDBClient.getInstance(mCtx.getApplicationContext())
                                 .getProjectDB()
                                 .projectDao()
-                                .delete(item);
-                    } catch (Exception e) {
+                                .delete(project);
+                    }catch (ConcurrentModificationException e){
 
                     }
                 }
-                return null;
             }
-        }
-        DeleteFromDb deleteFromDb = new DeleteFromDb();
-        deleteFromDb.execute();
+        });
     }
 
     private void setAllChecked() {
-        selectedItems.addAll(projectList);
+        synchronized (selectedItems){
+            selectedItems.addAll(projectList);
+        }
         notifyDataSetChanged();
     }
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-        multiSelect = false;
-        selectedItems.clear();
+
+        synchronized (selectedItems){
+            multiSelect = false;
+            selectedItems.clear();
+        }
         notifyDataSetChanged();
     }
 
-    public class ProjectHistoryViewHolder extends RecyclerView.ViewHolder {
-        private MaterialTextView modifiedProjectDate;
-        private MaterialTextView numberOfImageInProject;
-        private ShapeableImageView imageView0;
-        private LinearLayout open_list_pdf;
-        private RelativeLayout RL_selection_layout;
-        private LinearLayout selection_background;
-        private TextView txt_project_name;
-
+    public class ProjectHistoryViewHolder extends RecyclerView.ViewHolder{
+        private final MaterialTextView modifiedProjectDate;
+        private final MaterialTextView numberOfImageInProject;
+        private final ShapeableImageView imageView0;
+        private final LinearLayout open_list_pdf;
+        private final RelativeLayout RL_selection_layout;
+        private final LinearLayout selection_background;
+        private final TextView txt_project_name;
+        private final MaterialButton btn_change_title_name;
         public ProjectHistoryViewHolder(@NonNull @NotNull View itemView) {
             super(itemView);
             modifiedProjectDate = itemView.findViewById(R.id.txt_modified_project_date);
@@ -224,16 +238,19 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
             open_list_pdf = itemView.findViewById(R.id.open_list_pdf);
             selection_background = itemView.findViewById(R.id.selection_background);
             txt_project_name = itemView.findViewById(R.id.txt_project_name);
+            btn_change_title_name = itemView.findViewById(R.id.edit_scan_name);
         }
 
         public void bindProject(int pos) {
             //new bind
             Project curr = projectList.get(pos);
 
-            if (selectedItems.contains(curr)) {
-                selection_background.setVisibility(View.VISIBLE);
-            } else {
-                selection_background.setVisibility(View.INVISIBLE);
+            synchronized (selectedItems){
+                if (selectedItems.contains(curr)) {
+                    selection_background.setVisibility(View.VISIBLE);
+                } else {
+                    selection_background.setVisibility(View.INVISIBLE);
+                }
             }
 
 
@@ -242,8 +259,8 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
             int size = imagePaths.size();
 
             String date = null;
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm aa");
-            date = format.format(new Date(Long.valueOf(curr.getCreatedOn())));
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm aa", Locale.getDefault());
+            date = format.format(new Date(Long.parseLong(curr.getCreatedOn())));
             modifiedProjectDate.setText(date);
             numberOfImageInProject.setText(String.valueOf(size));
             txt_project_name.setText(curr.getProjectName());
@@ -259,50 +276,44 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            open_list_pdf.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (multiSelect) {
-                        selectItem(selection_background, curr);
-                    } else {
-                        openRecentHistory(pos);
-                    }
+            open_list_pdf.setOnClickListener(v -> {
+                if (multiSelect) {
+                    selectItem(selection_background, curr);
+                } else {
+                    openRecentHistory(pos);
                 }
             });
 
-            imageView0.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (multiSelect) {
-                        selectItem(selection_background, curr);
-                    } else {
-                        openRecentHistory(pos);
-                    }
+            imageView0.setOnClickListener(v -> {
+                if (multiSelect) {
+                    selectItem(selection_background, curr);
+                } else {
+                    openRecentHistory(pos);
                 }
             });
-            open_list_pdf.setOnLongClickListener(new View.OnLongClickListener() {
+            open_list_pdf.setOnLongClickListener(v -> {
+                longPressAction(curr);
+                return true;
+            });
+
+            imageView0.setOnLongClickListener(v -> {
+                longPressAction(curr);
+                return true;
+            });
+            RL_selection_layout.setOnLongClickListener(v -> {
+                longPressAction(curr);
+                return true;
+            });
+
+            btn_change_title_name.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public boolean onLongClick(View v) {
-                    longPressAction(curr);
-                    return true;
+                public void onClick(View v) {
+                    itemClickListener.onItemClicked(v,curr.getProjectName(),curr.getId(),pos);
                 }
             });
 
-            imageView0.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    longPressAction(curr);
-                    return true;
-                }
-            });
-            RL_selection_layout.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    longPressAction(curr);
-                    return true;
-                }
-            });
         }
+
 
         void longPressAction(Project curr) {
             if (!multiSelect) {
@@ -313,15 +324,14 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
         }
 
         private void selectItem(LinearLayout selection_background, Project curr) {
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
+            executor.execute(() -> {
+                synchronized (selectedItems){
                     if (selectedItems.contains(curr)) {
                         selectedItems.remove(curr);
-                        selection_background.setVisibility(View.INVISIBLE);
+                        handler.post(() -> selection_background.setVisibility(View.INVISIBLE));
                     } else {
                         selectedItems.add(curr);
-                        selection_background.setVisibility(View.VISIBLE);
+                        handler.post(() -> selection_background.setVisibility(View.VISIBLE));
                     }
                 }
             });
@@ -341,7 +351,7 @@ public class ProjectHistoryAdapter extends RecyclerView.Adapter<ProjectHistoryAd
             Fragment currentFragment = ((MainActivity) mCtx).getSupportFragmentManager().findFragmentById(R.id.main_frame_layout);
 
             //Prevent adding same fragment on top
-            if (currentFragment.getClass() == fragment.getClass()) {
+            if (Objects.requireNonNull(currentFragment).getClass() == fragment.getClass()) {
                 return;
             }
 

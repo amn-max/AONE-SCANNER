@@ -8,6 +8,7 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,7 +30,6 @@ import com.aonescan.scanner.CostumClass.OutputDirectory;
 import com.aonescan.scanner.Helpers.ImageUtils;
 import com.aonescan.scanner.Libraries.NativeClass;
 import com.aonescan.scanner.Libraries.PolygonView;
-import com.aonescan.scanner.Model.Action;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -43,7 +43,6 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,56 +50,31 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import dev.shreyaspatil.MaterialDialog.AbstractDialog;
+import dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface;
 
 public class ImagesScanActivity extends AppCompatActivity {
-    private FrameLayout holderImageCrop;
-    private ShapeableImageView imageView;
-    private PolygonView polygonView;
-    private Bitmap selectedImageBitmap;
-    private FloatingActionButton btnCropImage;
-    private FloatingActionButton btnDoneEditing;
-    private FloatingActionButton btnRotateImage;
-    private FloatingActionButton btnEnhanceImage;
-    private FloatingActionButton btnBlackWhite;
-    private NativeClass nativeClass;
-    private Bitmap singleImage;
-    private int singleImagePos;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
-    private Handler handlerExe = new Handler(Looper.getMainLooper());
-    private File outputDirectory;
-    private int changeCount = 0;
-    private ArrayList<Bitmap> bitmapsForUndo = new ArrayList<>();
-    private int currentShowingIndex = 0;
-    private boolean isColorPropertiesOpen = false;
-    private boolean isBubbleSeekBarOpen = false;
-    private FloatingActionButton btn_undoBitmap;
-    private FloatingActionButton btn_redoBitmap;
-    private BubbleSeekBar bubbleSeekBar;
-    private ArrayList<Action> actions = new ArrayList<>();
-    private Bitmap originalImage;
-    private MaterialButton resetToOriginal;
-    private LinearLayout bubbleSeekBarLL;
-    private boolean isEnhanced = false;
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Handler handlerExe = new Handler(Looper.getMainLooper());
+    private final ArrayList<Bitmap> bitmapsForUndo = new ArrayList<>();
+    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                    Log.i("MainActivity", "loaded successfully");
-                    break;
-                default:
-                    super.onManagerConnected(status);
-                    CustomDialog customDialog = new CustomDialog(ImagesScanActivity.this);
-                    customDialog.showMyDialog("Oops!, this is awkward", "You Device is Not Supported", false, "Ok", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
-                        @Override
-                        public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
-                            dialogInterface.dismiss();
-                        }
-                    }, null, 0, null);
+            if (status == LoaderCallbackInterface.SUCCESS) {
+                Log.i("MainActivity", "loaded successfully");
+            } else {
+                super.onManagerConnected(status);
+                CustomDialog customDialog = new CustomDialog(ImagesScanActivity.this);
+                customDialog.showMyDialog("Oops!, this is awkward", "You Device is Not Supported", false, "Ok", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int which) {
+                        dialogInterface.dismiss();
+                    }
+                }, null, 0, null);
             }
         }
 
@@ -109,13 +83,29 @@ public class ImagesScanActivity extends AppCompatActivity {
 
         }
     };
-    private View.OnClickListener btnImageCropClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            cropImage();
-        }
-    };
-
+    private FrameLayout holderImageCrop;
+    private ShapeableImageView imageView;
+    private PolygonView polygonView;
+    private Bitmap selectedImageBitmap;
+    private FloatingActionButton btnCropImage;
+    private MaterialButton btnDoneEditing;
+    private FloatingActionButton btnRotateImage;
+    private FloatingActionButton btnEnhanceImage;
+    private FloatingActionButton btnBlackWhite;
+    private NativeClass nativeClass;
+    private Bitmap singleImage;
+    private int singleImagePos;
+    private File outputDirectory;
+    private int changeCount = 0;
+    private int currentShowingIndex = 0;
+    private FloatingActionButton btn_undoBitmap;
+    private FloatingActionButton btn_redoBitmap;
+    private final View.OnClickListener btnImageCropClick = v -> cropImage();
+    private BubbleSeekBar bubbleSeekBar;
+    private Bitmap originalImage;
+    private MaterialButton resetToOriginal;
+    private LinearLayout bubbleSeekBarLL;
+    private boolean isEnhanced = false;
     @Override
     protected void onResume() {
         super.onResume();
@@ -145,21 +135,9 @@ public class ImagesScanActivity extends AppCompatActivity {
         dialog.dismissDialog();
         final LoadingDialogTransparent dialogRun = new LoadingDialogTransparent(ImagesScanActivity.this);
         dialogRun.startLoadingDialog();
-        holderImageCrop.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    initializeCropping();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        dialogRun.dismissDialog();
-                    }
-                });
-            }
+        holderImageCrop.post(() -> {
+            initializeCropping();
+            runOnUiThread(dialogRun::dismissDialog);
         });
     }
 
@@ -167,13 +145,18 @@ public class ImagesScanActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_scan);
-
-
-        setTitle("Edit Image");
+        try {
+            setTitle("Edit Image");
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
 //        singleImage = BitmapFactory.decodeFile(getIntent().getStringExtra("singleImage"));
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, getApplicationContext(), mLoaderCallback);
         try {
-            singleImage = extractRotation(MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), FileProvider.getUriForFile(ImagesScanActivity.this, getApplicationContext().getPackageName() + ".provider", new File(getIntent().getStringExtra("singleImage")))));
+            singleImage =
+                    extractRotation(MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(),
+                    FileProvider.getUriForFile(ImagesScanActivity.this, "com.aonescan.scanner.provider",
+                            new File(getIntent().getStringExtra("singleImage")))));
             originalImage = singleImage.copy(singleImage.getConfig(), true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -183,26 +166,59 @@ public class ImagesScanActivity extends AppCompatActivity {
 
         holderImageCrop = findViewById(R.id.holderImageCrop);
         initializeElement();
-
     }
 
 
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+            finish();
+        }else {
+            supportFinishAfterTransition();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        finish();
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+            finish();
+        }else {
+            supportFinishAfterTransition();
+        }
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        finish();
+
+        if(changeCount>0){
+            //showDialogBox for confirmation
+            CustomDialog customDialog = new CustomDialog(this);
+            customDialog.showMyDialog("Save Changes", "If you close without saving, the changes you have made will be lost.", true, "Save", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
+                @Override
+                public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
+                    btnDoneEditing.performClick();
+                }
+            }, "Close", R.drawable.ic_close, new AbstractDialog.OnClickListener() {
+                @Override
+                public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
+                    dialogInterface.dismiss();
+                    if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+                        finish();
+                    }else {
+                        supportFinishAfterTransition();
+                    }
+                }
+            });
+        }else{
+            super.onBackPressed();
+            if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+                finish();
+            }else {
+                supportFinishAfterTransition();
+            }
+        }
     }
 
 
@@ -234,16 +250,8 @@ public class ImagesScanActivity extends AppCompatActivity {
     }
 
     private void setVisibility() {
-        if (currentShowingIndex > 0) {
-            btn_undoBitmap.setEnabled(true);
-        } else {
-            btn_undoBitmap.setEnabled(false);
-        }
-        if (currentShowingIndex + 1 < bitmapsForUndo.size()) {
-            btn_redoBitmap.setEnabled(true);
-        } else {
-            btn_redoBitmap.setEnabled(false);
-        }
+        btn_undoBitmap.setEnabled(currentShowingIndex > 0);
+        btn_redoBitmap.setEnabled(currentShowingIndex + 1 < bitmapsForUndo.size());
     }
 
     private Bitmap getUndoBitmap() {
@@ -254,7 +262,7 @@ public class ImagesScanActivity extends AppCompatActivity {
 
             return bitmapsForUndo.get(currentShowingIndex).copy(bitmapsForUndo.get(currentShowingIndex).getConfig(), true);
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return null;
     }
@@ -267,7 +275,7 @@ public class ImagesScanActivity extends AppCompatActivity {
 
             return bitmapsForUndo.get(currentShowingIndex).copy(bitmapsForUndo.get(currentShowingIndex).getConfig(), true);
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return null;
     }
@@ -291,114 +299,57 @@ public class ImagesScanActivity extends AppCompatActivity {
         bubbleSeekBarLL.animate().alpha(0.0f);
         setVisibility();
         outputDirectory = new OutputDirectory(this, ".images").getFileDir();
-        holderImageCrop.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    initializeCropping();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        holderImageCrop.post(this::initializeCropping);
+
+
+        resetToOriginal.setOnClickListener(v -> {
+            final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+            dialog.startLoadingDialog();
+            selectedImageBitmap = originalImage;
+            singleImage = selectedImageBitmap;
+            currentShowingIndex = 0;
+            setVisibility();
+            holderImageCrop.post(() -> {
+                initializeCropping();
+                runOnUiThread(dialog::dismissDialog);
+            });
+        });
+
+        btnEnhanceImage.setOnClickListener(v -> {
+            bubbleSeekBarLL.animate().alpha(1.0f);
+            changeCount++;
+            openButtonSeekBar();
+            addToUndoList();
+            final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+            dialog.startLoadingDialog();
+            executor.execute(() -> {
+                if (!isEnhanced) {
+                    selectedImageBitmap = nativeClass.getMagicColoredBitmap(ImageUtils.bitmapToMat(singleImage), 1);
+                    Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+                    handlerExe.post(() -> runOnUiThread(() -> {
+                        dialog.dismissDialog();
+                        imageView.setImageBitmap(scaledBitmap);
+                    }));
+                } else {
+                    handlerExe.post(() -> runOnUiThread(dialog::dismissDialog));
                 }
-            }
+            });
         });
 
-
-        resetToOriginal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                dialog.startLoadingDialog();
-                selectedImageBitmap = originalImage;
-                singleImage = selectedImageBitmap;
-                currentShowingIndex = 0;
-                setVisibility();
-                holderImageCrop.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            initializeCropping();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismissDialog();
-                            }
-                        });
-                    }
+        btnBlackWhite.setOnClickListener(v -> {
+            changeCount++;
+            closeButtonSeekBar();
+            addToUndoList();
+            final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+            dialog.startLoadingDialog();
+            AsyncTask.execute(() -> {
+                selectedImageBitmap = nativeClass.getBlackAndWhiteBitmap(ImageUtils.bitmapToMat(singleImage));
+                Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+                runOnUiThread(() -> {
+                    dialog.dismissDialog();
+                    imageView.setImageBitmap(scaledBitmap);
                 });
-            }
-        });
-
-        btnEnhanceImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                bubbleSeekBarLL.animate().alpha(1.0f);
-                changeCount++;
-                openButtonSeekBar();
-                addToUndoList();
-                final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                dialog.startLoadingDialog();
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!isEnhanced) {
-                            selectedImageBitmap = nativeClass.getMagicColoredBitmap(ImageUtils.bitmapToMat(singleImage), 1);
-                            Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                            handlerExe.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            dialog.dismissDialog();
-                                            imageView.setImageBitmap(scaledBitmap);
-                                        }
-                                    });
-                                }
-                            });
-                        } else {
-                            handlerExe.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            dialog.dismissDialog();
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        });
-
-        btnBlackWhite.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeCount++;
-                closeButtonSeekBar();
-                addToUndoList();
-                final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                dialog.startLoadingDialog();
-                AsyncTask.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        selectedImageBitmap = nativeClass.getBlackAndWhiteBitmap(ImageUtils.bitmapToMat(singleImage));
-                        Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismissDialog();
-                                imageView.setImageBitmap(scaledBitmap);
-                            }
-                        });
-                    }
-                });
-            }
+            });
         });
 
         bubbleSeekBar.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
@@ -424,32 +375,25 @@ public class ImagesScanActivity extends AppCompatActivity {
                         iteration = 4;
                         break;
                     default:
-                        iteration = 0;
                         break;
                 }
                 final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
                 dialog.startLoadingDialog();
                 int finalIteration = iteration;
-                AsyncTask.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.e("progress", "" + progress + " " + progressFloat);
+                AsyncTask.execute(() -> {
+                    Log.e("progress", "" + progress + " " + progressFloat);
 
 //                        selectedImageBitmap = singleImage.copy(singleImage.getConfig(),true);
 //                        Bitmap temp = singleImage.copy(singleImage.getConfig(),true);
 
-                        selectedImageBitmap = nativeClass.getErodedImage(finalIteration);
+                    selectedImageBitmap = nativeClass.getErodedImage(finalIteration);
 
-                        addToUndoList();
-                        Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismissDialog();
-                                imageView.setImageBitmap(scaledBitmap);
-                            }
-                        });
-                    }
+                    addToUndoList();
+                    Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+                    runOnUiThread(() -> {
+                        dialog.dismissDialog();
+                        imageView.setImageBitmap(scaledBitmap);
+                    });
                 });
             }
 
@@ -463,140 +407,95 @@ public class ImagesScanActivity extends AppCompatActivity {
         btnCropImage.setOnClickListener(btnImageCropClick);
 
 
-        btn_undoBitmap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bitmap temp = getUndoBitmap();
-                if (temp != null) {
-                    final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                    dialog.startLoadingDialog();
-                    selectedImageBitmap = temp;
-                    Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                    singleImage = selectedImageBitmap;
-                    imageView.setImageBitmap(scaledBitmap);
-                    setVisibility();
-                    holderImageCrop.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                initializeCropping();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog.dismissDialog();
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
-
-        btn_redoBitmap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bitmap temp = getRedoBitmap();
-                if (temp != null) {
-                    final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                    dialog.startLoadingDialog();
-                    selectedImageBitmap = temp;
-                    Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                    singleImage = selectedImageBitmap;
-                    imageView.setImageBitmap(scaledBitmap);
-                    setVisibility();
-                    holderImageCrop.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                initializeCropping();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog.dismissDialog();
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
-
-
-        btnDoneEditing.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cropImage();
-                File EditedFile = new File(outputDirectory, "Image_" + System.currentTimeMillis() + ".jpg");
-                String filename = EditedFile.getAbsolutePath();
-                if (changeCount > 0) {
-                    final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
-                    dialog.startLoadingDialog();
-                    new Thread(() -> {
-                        try {
-                            FileOutputStream out = new FileOutputStream(EditedFile);
-                            selectedImageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-                            out.flush();
-                            out.close();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("EditedResult", filename);
-                        resultIntent.putExtra("resultSingleImgPos", singleImagePos);
-                        setResult(RESULT_OK, resultIntent);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismissDialog();
-                                finish();
-                            }
-                        });
-                    }).start();
-                } else {
-                    Intent resultIntent = new Intent();
-                    setResult(RESULT_CANCELED, resultIntent);
-                    finish();
-                }
-
-            }
-        });
-
-        btnRotateImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeCount++;
+        btn_undoBitmap.setOnClickListener(v -> {
+            Bitmap temp = getUndoBitmap();
+            if (temp != null) {
                 final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
                 dialog.startLoadingDialog();
-                selectedImageBitmap = rotateBitmap(selectedImageBitmap, -90);
-                addToUndoList();
+                selectedImageBitmap = temp;
                 Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
-                imageView.setImageBitmap(scaledBitmap);
                 singleImage = selectedImageBitmap;
-                holderImageCrop.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            initializeCropping();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismissDialog();
-                            }
-                        });
-                    }
+                imageView.setImageBitmap(scaledBitmap);
+                setVisibility();
+                holderImageCrop.post(() -> {
+                    initializeCropping();
+                    runOnUiThread(dialog::dismissDialog);
                 });
             }
+        });
+
+        btn_redoBitmap.setOnClickListener(v -> {
+            Bitmap temp = getRedoBitmap();
+            if (temp != null) {
+                final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+                dialog.startLoadingDialog();
+                selectedImageBitmap = temp;
+                Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+                singleImage = selectedImageBitmap;
+                imageView.setImageBitmap(scaledBitmap);
+                setVisibility();
+                holderImageCrop.post(() -> {
+                    initializeCropping();
+                    runOnUiThread(dialog::dismissDialog);
+                });
+            }
+        });
+
+
+        btnDoneEditing.setOnClickListener(v -> {
+            cropImage();
+            File EditedFile = new File(outputDirectory, "Image_" + System.currentTimeMillis() + ".jpg");
+            String filename = EditedFile.getAbsolutePath();
+            if (changeCount > 0) {
+                final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+                dialog.startLoadingDialog();
+                new Thread(() -> {
+                    try {
+                        FileOutputStream out = new FileOutputStream(EditedFile);
+                        selectedImageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+                        out.flush();
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("EditedResult", filename);
+                    resultIntent.putExtra("resultSingleImgPos", singleImagePos);
+                    setResult(RESULT_OK, resultIntent);
+                    runOnUiThread(() -> {
+                        dialog.dismissDialog();
+                        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+                            finish();
+                        }else {
+                            supportFinishAfterTransition();
+                        }
+                    });
+                }).start();
+            } else {
+                Intent resultIntent = new Intent();
+                setResult(RESULT_CANCELED, resultIntent);
+                if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+                    finish();
+                }else {
+                    supportFinishAfterTransition();
+                }
+            }
+
+        });
+
+        btnRotateImage.setOnClickListener(v -> {
+            changeCount++;
+            final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+            dialog.startLoadingDialog();
+            selectedImageBitmap = ImageUtils.rotateBitmap(selectedImageBitmap, -90);
+            addToUndoList();
+            Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+            imageView.setImageBitmap(scaledBitmap);
+            singleImage = selectedImageBitmap;
+            holderImageCrop.post(() -> {
+                initializeCropping();
+                runOnUiThread(dialog::dismissDialog);
+            });
         });
 
 
@@ -611,7 +510,7 @@ public class ImagesScanActivity extends AppCompatActivity {
     }
 
 
-    private void initializeCropping() throws IOException {
+    private void initializeCropping() {
 
         selectedImageBitmap = singleImage;
 
@@ -640,13 +539,13 @@ public class ImagesScanActivity extends AppCompatActivity {
         Bitmap rotatedBitmap = null;
         switch (orientation) {
             case ExifInterface.ORIENTATION_ROTATE_90:
-                rotatedBitmap = rotateBitmap(scaledBitmap, 90);
+                rotatedBitmap = ImageUtils.rotateBitmap(scaledBitmap, 90);
                 break;
             case ExifInterface.ORIENTATION_ROTATE_180:
-                rotatedBitmap = rotateBitmap(scaledBitmap, 180);
+                rotatedBitmap = ImageUtils.rotateBitmap(scaledBitmap, 180);
                 break;
             case ExifInterface.ORIENTATION_ROTATE_270:
-                rotatedBitmap = rotateBitmap(scaledBitmap, 270);
+                rotatedBitmap = ImageUtils.rotateBitmap(scaledBitmap, 270);
                 break;
             default:
                 rotatedBitmap = scaledBitmap;
@@ -662,14 +561,14 @@ public class ImagesScanActivity extends AppCompatActivity {
         float xRatio = (float) selectedImageBitmap.getWidth() / imageView.getWidth();
         float yRatio = (float) selectedImageBitmap.getHeight() / imageView.getHeight();
 
-        float x1 = (points.get(0).x) * xRatio;
-        float x2 = (points.get(1).x) * xRatio;
-        float x3 = (points.get(2).x) * xRatio;
-        float x4 = (points.get(3).x) * xRatio;
-        float y1 = (points.get(0).y) * yRatio;
-        float y2 = (points.get(1).y) * yRatio;
-        float y3 = (points.get(2).y) * yRatio;
-        float y4 = (points.get(3).y) * yRatio;
+        float x1 = (Objects.requireNonNull(points.get(0)).x) * xRatio;
+        float x2 = (Objects.requireNonNull(points.get(1)).x) * xRatio;
+        float x3 = (Objects.requireNonNull(points.get(2)).x) * xRatio;
+        float x4 = (Objects.requireNonNull(points.get(3)).x) * xRatio;
+        float y1 = (Objects.requireNonNull(points.get(0)).y) * yRatio;
+        float y2 = (Objects.requireNonNull(points.get(1)).y) * yRatio;
+        float y3 = (Objects.requireNonNull(points.get(2)).y) * yRatio;
+        float y4 = (Objects.requireNonNull(points.get(3)).y) * yRatio;
 
         return nativeClass.getScannedBitmap(selectedImageBitmap, x1, y1, x2, y2, x3, y3, x4, y4);
 
@@ -679,12 +578,6 @@ public class ImagesScanActivity extends AppCompatActivity {
         Matrix m = new Matrix();
         m.setRectToRect(new RectF(0, 0, bitmap.getWidth(), bitmap.getHeight()), new RectF(0, 0, width, height), Matrix.ScaleToFit.CENTER);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
-    }
-
-    protected Bitmap rotateBitmap(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     private Map<Integer, PointF> getEdgePoints(Bitmap tempBitmap) {
@@ -704,7 +597,7 @@ public class ImagesScanActivity extends AppCompatActivity {
                 result.add(new PointF(((float) points.get(i).x), ((float) points.get(i).y)));
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         return result;
     }

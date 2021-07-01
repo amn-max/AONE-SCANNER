@@ -15,13 +15,13 @@ import android.view.MotionEvent;
 import com.google.android.material.imageview.ShapeableImageView;
 
 public class ImageMagnifier extends ShapeableImageView {
+    private final int sizeOfMagnifier = 200;
     private PointF zoomPos;
     private boolean zooming = false;
     private Matrix matrix;
     private Paint paint;
     private Bitmap bitmap;
     private BitmapShader shader;
-    private int sizeOfMagnifier = 200;
 
     public ImageMagnifier(Context context) {
         super(context);

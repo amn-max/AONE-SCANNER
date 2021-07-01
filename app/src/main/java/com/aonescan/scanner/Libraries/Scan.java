@@ -11,16 +11,13 @@ import java.util.List;
 
 public class Scan {
 
-    // Mat objects to store input image, filtered image from HPF & scanned image
-    private Mat inputImg;
-    private Mat filtered = new Mat();
+    private final Mat inputImg;
+    private final Mat filtered = new Mat();
+    private final int blackPoint;
     private Mat processedImg = new Mat();
-
     private int kSize;
-    private int blackPoint;
     private int whitePoint;
 
-    // constructor
     public Scan(Mat image, int kernelSize, int blackPoint, int whitePoint) {
         this.inputImg = image.clone();
         this.kSize = kernelSize;
@@ -28,12 +25,6 @@ public class Scan {
         this.whitePoint = whitePoint;
     }
 
-    /* High Pass Filter
-     * Output of HPF depends on the kernel size provided through the constructor
-     * Links to the docuementation:
-     *  Introduction: https://github.com/sourabhkhemka/DocumentScanner/wiki/Scan:-Introduction
-     *  HPF: https://github.com/sourabhkhemka/DocumentScanner/wiki/GCMODE
-     */
     public void highPassFilter() {
         if (kSize % 2 == 0)
             kSize++;
@@ -43,7 +34,6 @@ public class Scan {
 
         Imgproc.filter2D(inputImg, filtered, -1, kernel);
 
-        // Convert both to float to avoid saturation of pixel values to 255
         filtered.convertTo(filtered, CvType.CV_32FC3);
         inputImg.convertTo(inputImg, CvType.CV_32FC3);
 
@@ -53,22 +43,19 @@ public class Scan {
         kernel.setTo(new Scalar(1, 1, 1));
 
         Core.multiply(kernel, new Scalar(127.0, 127.0, 127.0), kernel);
-        Imgproc.cvtColor(filtered, filtered, Imgproc.COLOR_RGBA2RGB);
+
+        if(filtered.channels()==4){
+            Imgproc.cvtColor(filtered, filtered, Imgproc.COLOR_RGBA2RGB);
+        }
+
         Core.add(filtered, kernel, filtered);
 
         filtered.convertTo(filtered, CvType.CV_8UC3);
-        // "filtered" now contains high pass filtered image.
+
     }
 
-    /* Method to select whitePoint in the image
-     *
-     * Links to documentation:
-     *  Introduction: https://github.com/sourabhkhemka/DocumentScanner/wiki/Scan:-Introduction
-     *  White Point Select: https://github.com/sourabhkhemka/DocumentScanner/wiki/White-Point-Select
-     */
     private void whitePointSelect() {
 
-        // refer repository's wiki page for detailed explanation
 
         Imgproc.threshold(processedImg, processedImg, whitePoint, 255, Imgproc.THRESH_TRUNC);
 
@@ -79,15 +66,8 @@ public class Scan {
 
     }
 
-    /* Method to select black point in the image
-     *
-     * Links to documentation:
-     *  Introduction: https://github.com/sourabhkhemka/DocumentScanner/wiki/Scan:-Introduction
-     *  Black Point Select: https://github.com/sourabhkhemka/DocumentScanner/wiki/Black-Point-Select
-     */
     private void blackPointSelect() {
 
-        // refer repository's wiki page for detailed explanation
 
         Core.subtract(processedImg, new Scalar(blackPoint, blackPoint, blackPoint), processedImg);
 
@@ -95,12 +75,8 @@ public class Scan {
         Core.multiply(processedImg, new Scalar(tmp, tmp, tmp), processedImg);
     }
 
-    /* Method to process image in LAB color space to generate black and white images
-     *  Wiki link: https://github.com/sourabhkhemka/DocumentScanner/wiki/SMODE:-Black-&-White
-     */
     private void blackAndWhite() {
 
-        // refer repository's wiki page for detailed explanation
         List<Mat> lab = new ArrayList<>();
         Mat subA = new Mat();
         Mat subB = new Mat();
@@ -114,20 +90,6 @@ public class Scan {
         Core.add(subA, subB, processedImg);
     }
 
-    /* Method scanImage is the only public method of the Scan class.
-     *  This method will be called to scan the image provided at time of
-     *  constructing Scan class' object.
-     *
-     * scanImage method uses switch-case to execute required methods in correct order
-     *  to implemnt desired mode of scanning.
-     *
-     * This method takes enum type as argument.
-     *
-     * whitePointSelect() and blackPointSelect() methods are designed to process "processedImg"
-     *  hence "inputImg" is copied to "processedImg" in RMODE and SMODE.
-     *  highPassFilter() outputs filtered image as "filtered" hence we need to copy "filtered"
-     *  to "processedImg" so that whitePointSelect() can further process it.
-     */
     public Mat scanImage(ScanMode mode) {
 
         switch (mode) {
@@ -162,9 +124,7 @@ public class Scan {
         return processedImg;
     }
 
-
-    // enum type to help select mode of scanning
-    public static enum ScanMode {
+    public enum ScanMode {
         GCMODE,
         RMODE,
         SMODE,

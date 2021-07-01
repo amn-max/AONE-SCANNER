@@ -48,7 +48,7 @@
     <color name="light_dark_400">#121212</color>
     <color name="transparent">#80000000</color>
     <color name="transparent_400">#B2000000</color>
-    <color name="text_disabled">#dddddd</color>
+    <color name="text_disabled">#666666</color>
     <color name="DarkBackground">#121212</color>
     <color name="TextBackground">#404040</color>
     <color name="Pallet">#282828</color>

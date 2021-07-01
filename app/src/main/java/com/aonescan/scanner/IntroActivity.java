@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -16,11 +15,11 @@ import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class IntroActivity extends AppCompatActivity {
 
     private ViewPager2 screenPager;
-    private IntroViewPagerAdapter introViewPagerAdapter;
     private TabLayout tabIndicator;
     private Button btnNext;
     private int position = 0;
@@ -32,9 +31,9 @@ public class IntroActivity extends AppCompatActivity {
         setContentView(R.layout.activity_intro);
 
         try {
-            getSupportActionBar().hide();
+            Objects.requireNonNull(getSupportActionBar()).hide();
         } catch (NullPointerException e) {
-
+            e.printStackTrace();
         }
 
         if (restorePrefData()) {
@@ -55,27 +54,22 @@ public class IntroActivity extends AppCompatActivity {
         mList.add(new ScreenItem("Rearrange Using Drag", "You can rearrange photos based on your preference and then convert them to PDF for correct page order.", R.drawable.rearrange_photos));
         mList.add(new ScreenItem("Explore PDF", "Seamlessly access files right inside Apps and share them to desired Social Media Apps", R.drawable.view_pdf));
 
+
         screenPager = findViewById(R.id.screen_view_pager);
-        introViewPagerAdapter = new IntroViewPagerAdapter(this, mList);
+        IntroViewPagerAdapter introViewPagerAdapter = new IntroViewPagerAdapter(this, mList);
         screenPager.setAdapter(introViewPagerAdapter);
 
-        new TabLayoutMediator(tabIndicator, screenPager, new TabLayoutMediator.TabConfigurationStrategy() {
-            @Override
-            public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-            }
+        new TabLayoutMediator(tabIndicator, screenPager, (tab, position) -> {
         }).attach();
 
-        btnNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                position = screenPager.getCurrentItem();
-                if (position < mList.size()) {
-                    position++;
-                    screenPager.setCurrentItem(position);
-                }
-                if (position == mList.size() - 1) {
-                    loadLastScreen();
-                }
+        btnNext.setOnClickListener(v -> {
+            position = screenPager.getCurrentItem();
+            if (position < mList.size()) {
+                position++;
+                screenPager.setCurrentItem(position);
+            }
+            if (position == mList.size() - 1) {
+                loadLastScreen();
             }
         });
 
@@ -98,21 +92,17 @@ public class IntroActivity extends AppCompatActivity {
             }
         });
 
-        btnGetStarted.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent mainIntent = new Intent(IntroActivity.this, MainActivity.class);
-                startActivity(mainIntent);
-                savePrefsData();
-                finish();
-            }
+        btnGetStarted.setOnClickListener(v -> {
+            Intent mainIntent = new Intent(IntroActivity.this, MainActivity.class);
+            startActivity(mainIntent);
+            savePrefsData();
+            finish();
         });
     }
 
     private boolean restorePrefData() {
         SharedPreferences pref = getApplicationContext().getSharedPreferences(getResources().getString(R.string.app_name), MODE_PRIVATE);
-        Boolean isIntroActivityOpenedBefore = pref.getBoolean("isIntroOpened", false);
-        return isIntroActivityOpenedBefore;
+        return pref.getBoolean("isIntroOpened", false);
     }
 
     private void savePrefsData() {
@@ -121,7 +111,7 @@ public class IntroActivity extends AppCompatActivity {
         editor.putBoolean("isIntroOpened", true);
         editor.putInt("timesOpened", 1);
         editor.putInt("initialCount", 1);
-        editor.commit();
+        editor.apply();
     }
 
     private void loadLastScreen() {

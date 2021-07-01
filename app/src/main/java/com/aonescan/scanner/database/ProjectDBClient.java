@@ -6,8 +6,8 @@ import androidx.room.Room;
 
 public class ProjectDBClient {
     private static ProjectDBClient mInstance;
-    private Context mCtx;
-    private ProjectDB projectDB;
+    private final Context mCtx;
+    private final ProjectDB projectDB;
 
     private ProjectDBClient(Context mCtx) {
         this.mCtx = mCtx;

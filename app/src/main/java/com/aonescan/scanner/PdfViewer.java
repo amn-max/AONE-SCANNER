@@ -5,7 +5,6 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.barteksc.pdfviewer.PDFView;
-import com.github.barteksc.pdfviewer.listener.OnRenderListener;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 
 import java.io.File;
@@ -28,12 +27,7 @@ public class PdfViewer extends AppCompatActivity {
                 .pageFitPolicy(FitPolicy.WIDTH)
                 .spacing(5).autoSpacing(false)
                 .defaultPage(0)
-                .onRender(new OnRenderListener() {
-                    @Override
-                    public void onInitiallyRendered(int nbPages) {
-                        pdfView.fitToWidth(pdfView.getCurrentPage());
-                    }
-                })
+                .onRender(nbPages -> pdfView.fitToWidth(pdfView.getCurrentPage()))
                 .load();
     }
 

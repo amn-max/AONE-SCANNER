@@ -11,6 +11,7 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.aonescan.scanner.R;
@@ -40,11 +41,15 @@ public class FileNameDialog extends DialogFragment {
         this.textHint = textHint;
     }
 
+    public void setFileNameDialogListener(FileNameDialogListener fileNameDialogListener){
+        this.fileNameDialogListener = fileNameDialogListener;
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        MaterialAlertDialogBuilder materialBuilder = new MaterialAlertDialogBuilder(getContext());
-        LayoutInflater inflater = getActivity().getLayoutInflater();
+        MaterialAlertDialogBuilder materialBuilder = new MaterialAlertDialogBuilder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
         final View view = inflater.inflate(R.layout.ask_file_name, null);
         btnSave = view.findViewById(R.id.btn_save);
         btnCancel = view.findViewById(R.id.btn_cancel);
@@ -53,61 +58,28 @@ public class FileNameDialog extends DialogFragment {
         titleTextview.setText(title);
         fileEdittext.setHint(textHint);
         materialBuilder.setView(view);
-        materialBuilder.setBackground(getResources().getDrawable(R.drawable.rounded_corner_white));
+        materialBuilder.setBackground(ResourcesCompat.getDrawable(requireContext().getResources(),R.drawable.rounded_corner_white,null));
         materialBuilder.setCancelable(false);
 
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnSave.setOnClickListener(v -> {
 
-                String fileName = editTextFilename.getText().toString();
-                fileNameDialogListener.applyText(fileName);
-                fileNameDialogListener.onDialog(true);
-                closeKeyboard();
-            }
+            String fileName = editTextFilename.getText().toString();
+            fileNameDialogListener.applyText(fileName);
+            fileNameDialogListener.onDialog(true);
+            closeKeyboard();
         });
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fileNameDialogListener.onDialog(true);
-                closeKeyboard();
-            }
+        btnCancel.setOnClickListener(v -> {
+            fileNameDialogListener.onDialog(true);
+            closeKeyboard();
         });
 
-//        materialBuilder.setView(view).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                closeKeyboard();
-//            }
-//        }).setPositiveButton("Save", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                String fileName = editTextFilename.getText().toString();
-//                fileNameDialogListener.applyText(fileName);
-//                closeKeyboard();
-//            }
-//        });
 
         editTextFilename = view.findViewById(R.id.et_filename_pdf);
         editTextFilename.setText(defaultFileName);
         editTextFilename.setSelectAllOnFocus(true);
         editTextFilename.requestFocus();
         showKeyboard();
-//        dialog = builder.create();
-//        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-//            @Override
-//            public void onShow(DialogInterface dialog1) {
-//                Button pos = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-//                Button neg = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-//                if(pos!=null){
-//                    pos.setTextColor(getResources().getColor(R.color.black));
-//                }
-//                if(neg!=null){
-//                    neg.setTextColor(getResources().getColor(R.color.black));
-//                }
-//            }
-//        });
         return materialBuilder.create();
     }
 
@@ -116,24 +88,24 @@ public class FileNameDialog extends DialogFragment {
     }
 
     public void showKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager inputMethodManager = (InputMethodManager) requireActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
     public void closeKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager inputMethodManager = (InputMethodManager) requireActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
     }
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        try {
-            fileNameDialogListener = (FileNameDialogListener) getTargetFragment();
-        } catch (ClassCastException e) {
-            Log.e("dialog", "onAttach : ClassCastException : " + e.getMessage());
-        }
-    }
+//    @Override
+//    public void onAttach(@NonNull Context context) {
+//        super.onAttach(context);
+//        try {
+//            fileNameDialogListener = (FileNameDialogListener) getTargetFragment();
+//        } catch (ClassCastException e) {
+//            Log.e("dialog", "onAttach : ClassCastException : " + e.getMessage());
+//        }
+//    }
 
     public void setDefaultName(String fileName) {
         this.defaultFileName = fileName;

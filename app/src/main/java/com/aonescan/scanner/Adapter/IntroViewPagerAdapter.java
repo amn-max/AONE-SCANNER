@@ -18,9 +18,8 @@ import java.util.List;
 
 
 public class IntroViewPagerAdapter extends RecyclerView.Adapter<IntroViewPagerAdapter.IntroViewHolder> {
+    private final Context context;
     List<ScreenItem> mListScreen;
-    private Context context;
-    private LayoutInflater layoutInflater;
 
     public IntroViewPagerAdapter(Context context, List<ScreenItem> mListScreen) {
         this.context = context;
@@ -47,7 +46,7 @@ public class IntroViewPagerAdapter extends RecyclerView.Adapter<IntroViewPagerAd
         return mListScreen.size();
     }
 
-    public class IntroViewHolder extends RecyclerView.ViewHolder {
+    public static class IntroViewHolder extends RecyclerView.ViewHolder {
         ImageView imgSlide;
         TextView title;
         TextView description;

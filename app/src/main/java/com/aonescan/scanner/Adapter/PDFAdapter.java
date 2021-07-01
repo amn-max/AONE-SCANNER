@@ -1,16 +1,17 @@
 package com.aonescan.scanner.Adapter;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -35,22 +36,24 @@ import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import dev.shreyaspatil.MaterialDialog.AbstractDialog;
 
 public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
 
-    private Context context;
-    private ArrayList<Pdf> pdfAbsPath = new ArrayList<>();
-    private PdfFragment pdfFragment;
+    private final Context context;
+    private final PdfFragment pdfFragment;
+    private final PdfiumCore pdfiumCore;
+    private final int pageNum = 0;
+    private ArrayList<Pdf> pdfAbsPath;
     private File renameFile;
-    private PdfiumCore pdfiumCore;
-    private int pageNum = 0;
-
+    private final ExecutorService executors = Executors.newSingleThreadExecutor();
+    private final Handler handler = new Handler(Looper.getMainLooper());
     public PDFAdapter(Context c, ArrayList<Pdf> pdfAbsPath, PdfFragment FragmentManager) {
         this.context = c;
         this.pdfAbsPath = pdfAbsPath;
@@ -68,11 +71,7 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull PDFAdapter.PdfViewHolder holder, int position) {
-        try {
-            holder.bindPdf(pdfAbsPath.get(position), position);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        holder.bindPdf(pdfAbsPath.get(position), position);
 
     }
 
@@ -100,7 +99,7 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
 
         }
 
-        void bindPdf(Pdf pdf, int position) throws FileNotFoundException {
+        void bindPdf(Pdf pdf, int position) {
             pdfText.setText(pdf.fileName);
 
             DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(context);
@@ -108,32 +107,15 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
             fileSize.setText(pdf.fileSize);
 
             generateImageFromPdf(Uri.fromFile(new File(pdf.absPath)));
-            main_fragment_file_info_layout.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return true;
-                }
+            main_fragment_file_info_layout.setOnTouchListener((v, event) -> {
+                v.performClick();
+                return true;
             });
 
 
-            pdfImage.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    openPdf(pdf.absPath);
-                }
-            });
-            pdfText.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    openPdf(pdf.absPath);
-                }
-            });
-            morePdf.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showPopupMenu(v);
-                }
-            });
+            pdfImage.setOnClickListener(v -> openPdf(pdf.absPath));
+            pdfText.setOnClickListener(v -> openPdf(pdf.absPath));
+            morePdf.setOnClickListener(v -> showPopupMenu(v));
             Log.e("PDFADAPTER", " " + pdf.fileName);
         }
 
@@ -150,6 +132,7 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
             origin.startActivity(openPdf);
         }
 
+        @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onMenuItemClick(MenuItem item) {
             switch (item.getItemId()) {
@@ -167,12 +150,16 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
                     File file = new File(pdfAbsPath.get(getAdapterPosition()).absPath);
                     if (file.exists()) {
                         CustomDialog customDialog = new CustomDialog(pdfFragment.getActivity());
-                        customDialog.showMyDialog("Delete File", "Are you sure you want to delete this PDF?", false, "Yes", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
+                        customDialog.showMyDialog("Delete", "This file will be deleted permanently. Are you sure you want to delete ?", false, "Yes", R.drawable.ic_done, new AbstractDialog.OnClickListener() {
                             @Override
                             public void onClick(dev.shreyaspatil.MaterialDialog.interfaces.DialogInterface dialogInterface, int which) {
-                                file.delete();
+                                boolean s = file.delete();
                                 dialogInterface.dismiss();
-                                Toast.makeText(context, deletingName + " has been deleted.", Toast.LENGTH_SHORT).show();
+                                if(s){
+                                    Toast.makeText(context, deletingName + " has been deleted.", Toast.LENGTH_SHORT).show();
+                                }else{
+                                    Toast.makeText(context, deletingName + " failed to deleted.", Toast.LENGTH_SHORT).show();
+                                }
                                 pdfAbsPath.remove(getAdapterPosition());
                                 notifyDataSetChanged();
                             }
@@ -213,60 +200,27 @@ public class PDFAdapter extends RecyclerView.Adapter<PDFAdapter.PdfViewHolder> {
 //        }
         void generateImageFromPdf(Uri pdfUri) {
             int pageNumber = 0;
-            class GeneratePreview extends AsyncTask<Void, Void, Bitmap> {
-                Bitmap bmp = null;
-
-                @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
-                    Glide.with(context).clear(pdfImage);
-                }
-
-                @Override
-                protected Bitmap doInBackground(Void... voids) {
-                    try {
-                        //http://www.programcreek.com/java-api-examples/index.php?api=android.os.ParcelFileDescriptor
-                        ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(pdfUri, "r");
-                        PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
-                        pdfiumCore.openPage(pdfDocument, pageNumber);
-                        int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNumber);
-                        int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNumber);
-                        bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
-                        pdfiumCore.renderPageBitmap(pdfDocument, bmp, pageNumber, 0, 0, width, height);
-                        pdfiumCore.closeDocument(pdfDocument); // important!
-                    } catch (Exception e) {
-                        //todo with exception
-                    }
-                    return bmp;
-                }
-
-                @Override
-                protected void onPostExecute(Bitmap bitmap) {
-                    super.onPostExecute(bitmap);
-                    Glide.with(context)
-                            .load(bitmap)
+            Glide.with(context).clear(pdfImage);
+            executors.execute(() -> {
+                try {
+                    ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(pdfUri, "r");
+                    PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
+                    pdfiumCore.openPage(pdfDocument, pageNumber);
+                    int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNumber);
+                    int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNumber);
+                    Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
+                    pdfiumCore.renderPageBitmap(pdfDocument, bmp, pageNumber, 0, 0, width, height);
+                    pdfiumCore.closeDocument(pdfDocument); // important!
+                    handler.post(() -> Glide.with(context)
+                            .load(bmp)
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .thumbnail(0.1f)
-                            .into(pdfImage);
+                            .into(pdfImage));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            }
-            GeneratePreview generatePreview = new GeneratePreview();
-            generatePreview.execute();
-//        try {
-//            //http://www.programcreek.com/java-api-examples/index.php?api=android.os.ParcelFileDescriptor
-//            ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(pdfUri, "r");
-//            PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
-//            pdfiumCore.openPage(pdfDocument, pageNumber);
-//            int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNumber);
-//            int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNumber);
-//            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-//            pdfiumCore.renderPageBitmap(pdfDocument, bmp, pageNumber, 0, 0, width, height);
-//            pdfiumCore.closeDocument(pdfDocument); // important!
-//            return bmp;
-//        } catch(Exception e) {
-//            //todo with exception
-//        }
-//        return null;
+
+            });
         }
     }
 

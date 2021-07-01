@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:visibility="invisible"
         android:background="@drawable/rounded_corner_transparent"
         android:elevation="10dp"/>
 
@@ -111,7 +112,33 @@
                 </LinearLayout>
             </LinearLayout>
 
-
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:orientation="horizontal"
+                android:layout_below="@id/open_list_pdf"
+                android:layout_marginRight="10dp"
+                android:layout_alignParentBottom="true">
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="42dp"
+                    android:id="@+id/edit_scan_name"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/ic_edit"
+                    app:iconGravity="textStart"
+                    android:background="@null"
+                    app:backgroundTint="@color/light_purple"
+                    app:iconPadding="0dp"
+                    android:padding="15dp"
+                    app:cornerRadius="10dp"
+                    app:iconSize="24dp"
+                    app:iconTint="@color/light_orange"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+            </LinearLayout>
         </RelativeLayout>
     </LinearLayout>
 </RelativeLayout>

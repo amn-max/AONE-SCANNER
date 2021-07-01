@@ -11,6 +11,7 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.aonescan.scanner.R;
@@ -18,6 +19,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textview.MaterialTextView;
+
+import org.jetbrains.annotations.NotNull;
 
 public class ScanNameDialog extends DialogFragment {
     public ScanNameDialogListener fileNameDialogListener;
@@ -31,7 +34,6 @@ public class ScanNameDialog extends DialogFragment {
     private String title;
     private String textHint;
 
-
     public void setTitle(String title) {
         this.title = title;
     }
@@ -40,11 +42,14 @@ public class ScanNameDialog extends DialogFragment {
         this.textHint = textHint;
     }
 
+    public void setFileNameDialogListener(ScanNameDialogListener scanNameDialogListener){
+        this.fileNameDialogListener = scanNameDialogListener;
+    }
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        MaterialAlertDialogBuilder materialBuilder = new MaterialAlertDialogBuilder(getContext());
-        LayoutInflater inflater = getActivity().getLayoutInflater();
+        MaterialAlertDialogBuilder materialBuilder = new MaterialAlertDialogBuilder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
         final View view = inflater.inflate(R.layout.ask_file_name, null);
         btnSave = view.findViewById(R.id.btn_save);
         btnCancel = view.findViewById(R.id.btn_cancel);
@@ -53,26 +58,20 @@ public class ScanNameDialog extends DialogFragment {
         titleTextview.setText(title);
         fileEdittext.setHint(textHint);
         materialBuilder.setView(view);
-        materialBuilder.setBackground(getResources().getDrawable(R.drawable.rounded_corner_white));
+        materialBuilder.setBackground(ResourcesCompat.getDrawable(requireContext().getResources(),R.drawable.rounded_corner_white,null));
         materialBuilder.setCancelable(false);
 
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnSave.setOnClickListener(v -> {
 
-                String fileName = editTextFilename.getText().toString();
-                fileNameDialogListener.applyScanText(fileName);
-                fileNameDialogListener.onScanDialog(true);
-                closeKeyboard();
-            }
+            String fileName = editTextFilename.getText().toString();
+            fileNameDialogListener.applyScanText(fileName);
+            fileNameDialogListener.onScanDialog(true);
+            closeKeyboard();
         });
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fileNameDialogListener.onScanDialog(true);
-                closeKeyboard();
-            }
+        btnCancel.setOnClickListener(v -> {
+            fileNameDialogListener.onScanDialog(true);
+            closeKeyboard();
         });
 
 //        materialBuilder.setView(view).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -111,29 +110,25 @@ public class ScanNameDialog extends DialogFragment {
         return materialBuilder.create();
     }
 
-    public void setFILE_NAME_STRING(String titleName) {
-        this.FILE_NAME_STRING = titleName;
-    }
-
     public void showKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager inputMethodManager = (InputMethodManager) requireActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
     public void closeKeyboard() {
-        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        InputMethodManager inputMethodManager = (InputMethodManager) requireActivity().getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
     }
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        try {
-            fileNameDialogListener = (ScanNameDialogListener) getTargetFragment();
-        } catch (ClassCastException e) {
-            Log.e("dialog", "onAttach : ClassCastException : " + e.getMessage());
-        }
-    }
+    //    @Override
+//    public void onAttach(@NonNull Context context) {
+//        super.onAttach(context);
+//        try {
+//            fileNameDialogListener = (ScanNameDialogListener) getTargetFragment();
+//        } catch (ClassCastException e) {
+//            Log.e("dialog", "onAttach : ClassCastException : " + e.getMessage());
+//        }
+//    }
 
     public void setDefaultName(String fileName) {
         this.defaultFileName = fileName;

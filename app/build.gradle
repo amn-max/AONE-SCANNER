@@ -22,17 +22,17 @@ android {
         minSdkVersion 21
         targetSdkVersion 30
         versionCode getVersionCode()
-        versionName "1.4.-beta${getVersionCode()}"
+        versionName "1.4.-alpha${getVersionCode()}"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
+        ndkVersion '22.1.7171670'
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            android.defaultConfig.ndk.debugSymbolLevel = 'SYMBOL_TABLE'
+            android.defaultConfig.ndk.debugSymbolLevel = 'full'
         }
     }
     compileOptions {
@@ -104,19 +104,21 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox
     implementation 'com.github.amn-max:PdfBox-Android:v1.8.10.3'
 
-    //firebase
-    implementation platform('com.google.firebase:firebase-bom:28.0.1')
-    implementation 'com.google.firebase:firebase-analytics'
-
-    //ads
-    implementation 'com.google.android.gms:play-services-ads:20.1.0'
-
     implementation 'com.github.zomato:androidphotofilters:1.0.2'
+
+//    //firebase
+//    implementation platform('com.google.firebase:firebase-bom:28.0.1')
+//    implementation 'com.google.firebase:firebase-analytics'
+    
+//    //ads
+//    implementation 'com.google.android.gms:play-services-ads:20.1.0'
 
     implementation "com.github.skydoves:balloon:1.3.4"
     def lifecycle_version = "2.3.1"
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+
+    implementation 'com.github.EnterPrayz:ObservableList-Android:1.0'
 }
 
 task('increaseVersionCode') {
