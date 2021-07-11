@@ -112,6 +112,23 @@
             android:layout_centerVertical="true" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/removeRetakeSingleImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_close"
+            app:iconSize="60dp"
+            app:iconPadding="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:insetTop="0dp"
+            android:visibility="invisible"
+            android:insetBottom="0dp"
+            android:tooltipText="Capture"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/camera_flip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

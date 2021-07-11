@@ -3,7 +3,6 @@ package com.aonescan.scanner.CostumClass;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -19,8 +18,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textview.MaterialTextView;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ScanNameDialog extends DialogFragment {
     public ScanNameDialogListener fileNameDialogListener;

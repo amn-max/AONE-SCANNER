@@ -14,9 +14,11 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -30,6 +32,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.aonescan.scanner.CostumClass.CustomDialog;
 import com.aonescan.scanner.CostumClass.OutputDirectory;
+import com.aonescan.scanner.Fragments.ImageListFragment;
 import com.aonescan.scanner.Helpers.ImageUtils;
 import com.aonescan.scanner.ImagesScanActivity;
 import com.aonescan.scanner.Libraries.NativeClass;
@@ -68,14 +71,15 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
     private final ArrayList<Images> absList;
     private boolean multiSelect = false;
     private ActivityResultLauncher<Intent> cropRequestLauncher;
-
+    private ImageListFragment imageListFragment;
     public CapturedImagesAdapter(Context c, ArrayList<Images> absList,
                                  ImagesListener imagesListener,
                                  AppCompatActivity activity,
                                  RelativeLayout image_list_parent_layout,
                                  int projectId,
                                  Executor executor,
-                                 ActivityResultLauncher<Intent> cropRequestLauncher) {
+                                 ActivityResultLauncher<Intent> cropRequestLauncher,
+                                 ImageListFragment imageListFragment) {
         this.context = c;
         this.absList = absList;
         this.mInflater = LayoutInflater.from(c);
@@ -85,6 +89,7 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
         this.projectId = projectId;
         this.executor = executor;
         this.cropRequestLauncher = cropRequestLauncher;
+        this.imageListFragment = imageListFragment;
     }
 
     @NonNull
@@ -96,7 +101,7 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        holder.bindImages(absList.get(position), position);
+        holder.bindImages(absList.get(position), position, holder);
     }
 
     @Override
@@ -269,6 +274,7 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
                                 });
                                 File EditedFile = new File(outputDirectory, "b_Image_" + System.currentTimeMillis() + ".jpg");
                                 Bitmap bitmap = BitmapFactory.decodeFile(absList.get(index).getImage());
+                                bitmap = ImageUtils.extractRotation(bitmap,absList.get(index).getImage());
                                 Bitmap enhancedBitmap = new NativeClass().getMagicColoredBitmap(ImageUtils.bitmapToMat(bitmap), 1);
                                 bitmap.recycle();
                                 absList.get(index).setIsEnhanced(true);
@@ -310,17 +316,19 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
     public class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView singleView;
         ProgressBar progressBar;
+        LinearLayout dragIndicator;
 //        LinearLayout image_selected_layer;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             singleView = itemView.findViewById(R.id.singleImage);
             progressBar = itemView.findViewById(R.id.singleImageLoading);
+            dragIndicator = itemView.findViewById(R.id.dragLinearLayout);
 //            image_selected_layer = itemView.findViewById(R.id.image_selected_layer);
         }
 
 
-        void bindImages(Images image, int pos) {
+        void bindImages(Images image, int pos, MyViewHolder holder) {
             try {
                 Log.d("ImageLocation", image.getImage());
 
@@ -350,6 +358,16 @@ public class CapturedImagesAdapter extends RecyclerView.Adapter<CapturedImagesAd
             } else {
                 progressBar.setVisibility(View.INVISIBLE);
             }
+
+            dragIndicator.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if(event.getActionMasked() == MotionEvent.ACTION_DOWN){
+                        imageListFragment.startDragging(holder);
+                    }
+                    return true;
+                }
+            });
 
             singleView.setOnLongClickListener(v -> {
                 if (!multiSelect) {

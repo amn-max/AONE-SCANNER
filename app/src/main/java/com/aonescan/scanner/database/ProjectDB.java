@@ -6,7 +6,7 @@ import androidx.room.TypeConverters;
 
 import com.aonescan.scanner.Model.Images;
 
-@Database(entities = {Project.class, Images.class}, version = 3, exportSchema = false)
+@Database(entities = {Project.class, Images.class}, version = 4, exportSchema = false)
 
 @TypeConverters({Converters.class})
 public abstract class ProjectDB extends RoomDatabase {

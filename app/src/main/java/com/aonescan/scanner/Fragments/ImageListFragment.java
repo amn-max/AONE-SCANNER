@@ -66,12 +66,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static android.app.Activity.RESULT_OK;
+import static androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG;
 
 
 public class ImageListFragment extends Fragment implements ImagesListener, FileNameDialog.FileNameDialogListener, LifecycleObserver {
-//    private static final int CAMERA_REQUEST_CODE = 122;
-//    private static final int GALLERY_REQUEST_CODE = 124;
-//    private static final int CROP_INTENT_CODE = 1021;
+
     private final Executor executor = new ThreadPoolExecutor(5, 128, 1,
             TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     private final ArrayList<Images> imagesObject = new ArrayList<>();
@@ -88,6 +87,7 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
     private Runnable runAnimation;
     private FileNameDialog fileNameDialog;
     private String deleteTimeStamp = "";
+    private ItemTouchHelper itemTouchHelper;
     private ActivityResultLauncher<Intent> cameraRequestLauncher;
     private ActivityResultLauncher<String[]> galleryRequestLauncher;
     private ActivityResultLauncher<Intent> cropRequestLauncher;
@@ -108,7 +108,30 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
             currProject.setImagePaths(paths);
             deleteTimeStamp = "";
             updateImagePath();
+            return true;
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
             return false;
+        }
+
+        @Override
+        public void onSelectedChanged(@Nullable @org.jetbrains.annotations.Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+            super.onSelectedChanged(viewHolder, actionState);
+            if(actionState == ACTION_STATE_DRAG){
+                if(viewHolder!=null){
+                    viewHolder.itemView.setAlpha(0.5f);
+                }
+            }
+        }
+
+        @Override
+        public void clearView(@NonNull @NotNull RecyclerView recyclerView, @NonNull @NotNull RecyclerView.ViewHolder viewHolder) {
+            super.clearView(recyclerView, viewHolder);
+            if(viewHolder!=null){
+                viewHolder.itemView.setAlpha(1.0f);
+            }
         }
 
         @Override
@@ -287,7 +310,8 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
                 image_list_parent_layout,
                 Integer.parseInt(arguments.getString("historyId", "")),
                 executor,
-                cropRequestLauncher);
+                cropRequestLauncher,
+                ImageListFragment.this);
         recyclerView.setAdapter(madapter);
 
     }
@@ -375,13 +399,16 @@ public class ImageListFragment extends Fragment implements ImagesListener, FileN
 
         expandMoreButtons.setOnClickListener(v -> animateFab());
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
+
         setImagesView();
         return view;
     }
 
-
+    public void startDragging(CapturedImagesAdapter.MyViewHolder holder){
+        itemTouchHelper.startDrag(holder);
+    }
     private void shakeArrow() {
         runAnimation = () -> expandMoreButtons.startAnimation(arrowShake);
 

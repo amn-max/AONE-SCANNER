@@ -7,15 +7,14 @@ import com.aonescan.scanner.Helpers.ImageUtils;
 import com.aonescan.scanner.Helpers.MathUtils;
 import com.zomato.photofilters.imageprocessors.Filter;
 import com.zomato.photofilters.imageprocessors.subfilters.BrightnessSubFilter;
-import com.zomato.photofilters.imageprocessors.subfilters.ColorOverlaySubFilter;
 import com.zomato.photofilters.imageprocessors.subfilters.ContrastSubFilter;
 import com.zomato.photofilters.imageprocessors.subfilters.SaturationSubFilter;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
-import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -48,7 +47,11 @@ public class NativeClass {
     {
         System.loadLibrary("NativeImageProcessor");
     }
-    private final Mat enhancedBitmap = new Mat();
+    private Mat enhancedBitmap = new Mat();
+
+    public void setEnhancedBitmap(Mat enhancedBitmap){
+        this.enhancedBitmap=enhancedBitmap;
+    }
 
     public Bitmap getScannedBitmap(Bitmap bitmap, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
         PerspectiveTransformation perspective = new PerspectiveTransformation();
@@ -78,6 +81,9 @@ public class NativeClass {
         return result;
     }
 
+    private static Mat morph_kernel = new Mat(new Size(3,3),CvType.CV_8UC1,new Scalar(255));
+
+
     //public native float[] getPoints(Bitmap bitmap);
     public List<MatOfPoint2f> getPoints(Mat src) {
 
@@ -101,6 +107,7 @@ public class NativeClass {
         // To filter rectangles by their areas.
         int srcArea = src.rows() * src.cols();
 
+
         // Find squares in every color plane of the image.
         for (int c = 0; c < 3; c++) {
             int[] ch = {c, 0};
@@ -116,11 +123,13 @@ public class NativeClass {
                     // NOTE: No kernel size parameters on Java API.
 
 
-                    Imgproc.Canny(gray0, gray, 60, 100);
+                    Imgproc.Canny(gray0, gray, 185 , 85);
 
 
                     // Dilate Canny output to remove potential holes between edge segments.
-                    Imgproc.dilate(gray, gray, Mat.ones(new Size(3, 3), 0));
+//                    Imgproc.dilate(gray, gray, Mat.ones(new Size(3, 3), 0));
+                    Imgproc.threshold(gray,gray,155,255,Imgproc.THRESH_TOZERO);
+                    Imgproc.morphologyEx(gray,gray,Imgproc.MORPH_CLOSE,morph_kernel,new Point(-1,-1),1);
                 } else {
                     int threshold = (l + 1) * 255 / THRESHOLD_LEVEL;
                     Imgproc.threshold(gray0, gray, threshold, 255, Imgproc.THRESH_BINARY);
@@ -143,9 +152,7 @@ public class NativeClass {
                 }
             }
         }
-
         return rectangles;
-
     }
 
     private byte saturate(double val) {
@@ -206,8 +213,8 @@ public class NativeClass {
         Filter filter = new Filter();
         Log.d("Alpha",String.valueOf(alpha));
         Log.d("Beta",String.valueOf(beta));
-        filter.addSubFilter(new BrightnessSubFilter((int) (Math.abs(alpha)*8)));
-        filter.addSubFilter(new SaturationSubFilter((float) ((Math.abs(beta)+0.9)*3.0)));
+        filter.addSubFilter(new BrightnessSubFilter((int) (Math.abs(alpha)*4)));
+        filter.addSubFilter(new SaturationSubFilter((float) ((Math.abs(beta)+0.1)*1.01)));
         filter.addSubFilter(new ContrastSubFilter(1.2f));
         return filter;
     }
@@ -260,8 +267,15 @@ public class NativeClass {
                 break;
         }
         Mat s = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
-        Imgproc.erode(enhancedBitmap, erode, s);
-        return ImageUtils.matToBitmap(erode);
+            try {
+                Imgproc.erode(enhancedBitmap, erode, s);
+
+            }catch (CvException e){
+                e.printStackTrace();
+                return null;
+            }
+
+        return ImageUtils.matToBitmap(enhancedBitmap);
     }
 
     private boolean isRectangle(MatOfPoint2f polygon, int srcArea) {

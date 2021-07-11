@@ -3,6 +3,7 @@ package com.aonescan.scanner;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -20,6 +21,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
@@ -83,6 +86,7 @@ public class ImagesScanActivity extends AppCompatActivity {
 
         }
     };
+
     private FrameLayout holderImageCrop;
     private ShapeableImageView imageView;
     private PolygonView polygonView;
@@ -106,6 +110,7 @@ public class ImagesScanActivity extends AppCompatActivity {
     private MaterialButton resetToOriginal;
     private LinearLayout bubbleSeekBarLL;
     private boolean isEnhanced = false;
+    private ActivityResultLauncher<Intent> cameraRequestLauncher;
     @Override
     protected void onResume() {
         super.onResume();
@@ -152,20 +157,67 @@ public class ImagesScanActivity extends AppCompatActivity {
         }
 //        singleImage = BitmapFactory.decodeFile(getIntent().getStringExtra("singleImage"));
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, getApplicationContext(), mLoaderCallback);
-        try {
-            singleImage =
-                    extractRotation(MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(),
-                    FileProvider.getUriForFile(ImagesScanActivity.this, "com.aonescan.scanner.provider",
-                            new File(getIntent().getStringExtra("singleImage")))));
-            originalImage = singleImage.copy(singleImage.getConfig(), true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+           try {
+               singleImage =
+                       extractRotation(MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(),
+                               FileProvider.getUriForFile(ImagesScanActivity.this, "com.aonescan.scanner.provider",
+                                       new File(getIntent().getStringExtra("singleImage")))));
+               originalImage = singleImage.copy(singleImage.getConfig(), true);
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
         singleImagePos = getIntent().getIntExtra("singleImagePosition", 0);
         isEnhanced = getIntent().getBooleanExtra("isEnhanced", false);
 
         holderImageCrop = findViewById(R.id.holderImageCrop);
+        cameraRequestLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
+                        dialog.startLoadingDialog();
+                        ArrayList<String> photosResult = result.getData().getStringArrayListExtra("photosResult");
+                        Bitmap bitmap = BitmapFactory.decodeFile(photosResult.get(0));
+                        selectedImageBitmap.recycle();
+                        selectedImageBitmap = bitmap.copy(bitmap.getConfig(),true);
+                        bitmap.recycle();
+                        Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+                        runOnUiThread(() -> {
+                            dialog.dismissDialog();
+                            imageView.setImageBitmap(scaledBitmap);
+                        });
+                    }
+                }
+        );
         initializeElement();
+//        executor.execute(new Runnable() {
+//            @Override
+//            public void run() {
+//                synchronized (originalImage){
+//                    selectedImageBitmap = originalImage;
+//                    Bitmap scaledBitmap = scaledBitmap(selectedImageBitmap, holderImageCrop.getWidth(), holderImageCrop.getHeight());
+//                    nativeClass.setEnhancedBitmap(ImageUtils.bitmapToMat(scaledBitmap));
+//                    if(nativeClass.getErodedImage(1)!=null){
+//                        handlerExe.post(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Log.d("Erode","Possible");
+//                                bubbleSeekBarLL.animate().alpha(1.0f);
+//                            }
+//                        });
+//                    }else{
+//                        handlerExe.post(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Log.d("Erode","Not Possible");
+//                                bubbleSeekBarLL.animate().alpha(0.0f);
+//                            }
+//                        });
+//                    }
+//                }
+//            }
+//        });
     }
 
 
@@ -250,8 +302,13 @@ public class ImagesScanActivity extends AppCompatActivity {
     }
 
     private void setVisibility() {
-        btn_undoBitmap.setEnabled(currentShowingIndex > 0);
-        btn_redoBitmap.setEnabled(currentShowingIndex + 1 < bitmapsForUndo.size());
+        handlerExe.post(new Runnable() {
+            @Override
+            public void run() {
+                btn_undoBitmap.setEnabled(currentShowingIndex > 0);
+                btn_redoBitmap.setEnabled(currentShowingIndex + 1 < bitmapsForUndo.size());
+            }
+        });
     }
 
     private Bitmap getUndoBitmap() {
@@ -291,16 +348,26 @@ public class ImagesScanActivity extends AppCompatActivity {
         btn_undoBitmap = findViewById(R.id.undo);
         btn_redoBitmap = findViewById(R.id.redo);
         imageView = findViewById(R.id.imageView);
-
+//        btnRetakeImage = findViewById(R.id.btnRetakeImage);
         polygonView = findViewById(R.id.polygonView);
         bubbleSeekBar = findViewById(R.id.bubbleSeekBar);
         resetToOriginal = findViewById(R.id.resetToOriginal);
         bubbleSeekBarLL = findViewById(R.id.bubbleSeekBarLL);
-        bubbleSeekBarLL.animate().alpha(0.0f);
+
         setVisibility();
         outputDirectory = new OutputDirectory(this, ".images").getFileDir();
         holderImageCrop.post(this::initializeCropping);
 
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if(nativeClass.getErodedImage(1)!=null){
+                    bubbleSeekBarLL.animate().alpha(1.0f);
+                }else{
+                    bubbleSeekBarLL.animate().alpha(0.0f);
+                }
+            }
+        });
 
         resetToOriginal.setOnClickListener(v -> {
             final LoadingDialogTransparent dialog = new LoadingDialogTransparent(ImagesScanActivity.this);
@@ -314,6 +381,15 @@ public class ImagesScanActivity extends AppCompatActivity {
                 runOnUiThread(dialog::dismissDialog);
             });
         });
+
+//        btnRetakeImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent cameraIntent = new Intent(ImagesScanActivity.this,CameraActivity.class);
+//                cameraIntent.putExtra("CAPTURE_ONE_IMAGE",true);
+//                cameraRequestLauncher.launch(cameraIntent);
+//            }
+//        });
 
         btnEnhanceImage.setOnClickListener(v -> {
             bubbleSeekBarLL.animate().alpha(1.0f);
@@ -385,7 +461,7 @@ public class ImagesScanActivity extends AppCompatActivity {
 
 //                        selectedImageBitmap = singleImage.copy(singleImage.getConfig(),true);
 //                        Bitmap temp = singleImage.copy(singleImage.getConfig(),true);
-
+                    nativeClass.setEnhancedBitmap(ImageUtils.bitmapToMat(originalImage));
                     selectedImageBitmap = nativeClass.getErodedImage(finalIteration);
 
                     addToUndoList();

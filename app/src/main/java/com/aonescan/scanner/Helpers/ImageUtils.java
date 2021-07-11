@@ -2,7 +2,6 @@ package com.aonescan.scanner.Helpers;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.util.Log;
 
 import androidx.exifinterface.media.ExifInterface;
 
@@ -18,7 +17,6 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ImageUtils {
@@ -92,7 +90,7 @@ public class ImageUtils {
         accumulator.add(Float.valueOf(String.valueOf(hist.get(0, 0)[0])));
 
         for (int i = 1; i < histSize; i++) {
-            accumulator.add(accumulator.get(i - 1) + Float.valueOf(String.valueOf(hist.get(i, 0)[0])));
+            accumulator.add(accumulator.get(i - 1) + Float.parseFloat(String.valueOf(hist.get(i, 0)[0])));
         }
 
         Float maximum = accumulator.get(accumulator.size() - 1);
@@ -143,7 +141,7 @@ public class ImageUtils {
         return resizedBitmap;
     }
 
-    private Bitmap extractRotation(Bitmap scaledBitmap, String image) throws IOException {
+    public static Bitmap extractRotation(Bitmap scaledBitmap, String image) throws IOException {
         ExifInterface ei = new ExifInterface(image);
         int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
 

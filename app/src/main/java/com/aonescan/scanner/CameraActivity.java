@@ -61,14 +61,17 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.scijoker.observablelist.ObservableArrayList;
+import com.scijoker.observablelist.ObservableList;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -112,6 +115,8 @@ public class CameraActivity extends AppCompatActivity {
     private LinearLayout rightShutterAnim;
     private AudioAttributes audioAttributes;
     private Runnable glideRunnable;
+    private Boolean isOnSingleCaptureMode;
+    private MaterialButton removeRetakeSingleImage;
     private void playShutter() {
         try {
             soundPool.play(soundShutter, 1, 1, 1, 0, 1);
@@ -133,6 +138,12 @@ public class CameraActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        try {
+            isOnSingleCaptureMode = getIntent().getBooleanExtra("CAPTURE_ONE_IMAGE",false);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         zoomBar = findViewById(R.id.zoomBar);
         zoomBar.setMax(100);
         zoomBar.setProgress(0);
@@ -144,6 +155,7 @@ public class CameraActivity extends AppCompatActivity {
         noOfImages = findViewById(R.id.txt_numberOfImages);
         sumbitPhotos = findViewById(R.id.btn_submit_photos);
         viewStamp = findViewById(R.id.imgViewStamp);
+        removeRetakeSingleImage = findViewById(R.id.removeRetakeSingleImage);
         leftShutterAnim = findViewById(R.id.leftShutterAnim);
         rightShutterAnim = findViewById(R.id.rightShutterAnim);
         leftShutterAnim.setAlpha(0.0f);
@@ -218,7 +230,34 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        ListImagesAbsPath.addOnChangeListener((eventType, list) -> noOfImages.setText(String.valueOf(ListImagesAbsPath.size())));
+        ListImagesAbsPath.addOnChangeListener(new ObservableList.OnChangeListener<String>() {
+            @Override
+            public void onChanged(ObservableList.EventType eventType, List<ObservableList.Event<String>> list) {
+                noOfImages.setText(String.valueOf(ListImagesAbsPath.size()));
+                if(isOnSingleCaptureMode && ListImagesAbsPath.size()==1){
+                    camera_Capture_Button.setEnabled(false);
+                    camera_Capture_Button.setVisibility(View.INVISIBLE);
+                    removeRetakeSingleImage.setVisibility(View.VISIBLE);
+                    removeRetakeSingleImage.setEnabled(true);
+                }else if (isOnSingleCaptureMode && ListImagesAbsPath.size()>1){
+                    Toast.makeText(getApplicationContext(),"Cannot take more photos when retaking",Toast.LENGTH_SHORT);
+                }
+            }
+        });
+
+        removeRetakeSingleImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ListImagesAbsPath.clear();
+                Bitmap b = null;
+                Glide.with(getApplicationContext()).load(b).into(viewStamp);
+                noOfImages.setText(String.valueOf(ListImagesAbsPath.size()));
+                camera_Capture_Button.setEnabled(true);
+                camera_Capture_Button.setVisibility(View.VISIBLE);
+                removeRetakeSingleImage.setVisibility(View.INVISIBLE);
+                removeRetakeSingleImage.setEnabled(false);
+            }
+        });
         cameraFlash.setOnClickListener(v -> {
             switch (flashMode) {
                 case ImageCapture.FLASH_MODE_OFF:

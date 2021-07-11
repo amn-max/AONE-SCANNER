@@ -1,6 +1,7 @@
 package com.aonescan.scanner.Model;
 
 
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
@@ -12,11 +13,12 @@ public class Images {
 
     @PrimaryKey(autoGenerate = true)
     private int numberId;
+    @ColumnInfo(name = "id",index = true)
     private int id;
     private String image;
-    private boolean isSelected = false;
-    private boolean isEnhanced = false;
-    private boolean isEnhancing = false;
+    private Boolean isSelected = false;
+    private Boolean isEnhanced = false;
+    private Boolean isEnhancing = false;
 
     public Images() {
 
@@ -50,7 +52,7 @@ public class Images {
         this.id = id;
     }
 
-    public boolean getSelected() {
+    public Boolean getSelected() {
         return isSelected;
     }
 
@@ -66,11 +68,11 @@ public class Images {
         this.image = image;
     }
 
-    public boolean getIsEnhanced() {
+    public Boolean getIsEnhanced() {
         return isEnhanced;
     }
 
-    public void setIsEnhanced(boolean isEnhanced) {
+    public void setIsEnhanced(Boolean isEnhanced) {
         this.isEnhanced = isEnhanced;
     }
 }
